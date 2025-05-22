@@ -36,18 +36,18 @@ if df.empty:
 else:
     # Corrigir colunas duplicadas automaticamente
     def dedup_columns(columns):
-    seen = {}
-    new_columns = []
-    for col in columns:
-        if col in seen:
-            seen[col] += 1
-            new_columns.append(f"{col}_{seen[col]}")
-        else:
-            seen[col] = 0
-            new_columns.append(col)
+        seen = {}
+        new_columns = []
+        for col in columns:
+            if col in seen:
+                seen[col] += 1
+                new_columns.append(f"{col}_{seen[col]}")
+            else:
+                seen[col] = 0
+                new_columns.append(col)
         return new_columns
 
     df.columns = dedup_columns(df.columns)
-    
+
     st.dataframe(df)
     st.bar_chart(df.groupby("Filial")["Total Produto"].sum())
