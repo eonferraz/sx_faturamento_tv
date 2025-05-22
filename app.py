@@ -95,29 +95,35 @@ else:
         <style>
         .card {
             border-radius: 10px;
-            padding: 20px;
+            padding: 12px;
             margin-bottom: 10px;
             color: white;
             text-align: center;
-            font-size: 18px;
+        }
+        .card b {
+            font-size: 24px;
+        }
+        .card-title {
+            font-size: 14px;
+            display: block;
         }
         .meta { background-color: #1f77b4; }
         .realizado { background-color: #2ca02c; }
         .pendente { background-color: #d62728; }
         .info { background-color: #6c757d; }
         .stPlotlyChart div div div div div canvas {
-            border-radius: 10px !important;
-            border: 1px solid #ddd !important;
+            border-radius: 8px !important;
+            border: 1px solid #aaa !important;
         }
         </style>
     """, unsafe_allow_html=True)
 
     col1, col2, col3, col4, col5 = st.columns(5)
-    col1.markdown(f'<div class="card meta">Meta Mensal<br><b>R$ {META_MENSAL:,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
-    col2.markdown(f'<div class="card realizado">Faturado no Mês<br><b>R$ {realizado:,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
-    col3.markdown(f'<div class="card pendente">Pendente<br><b>R$ {pendente:,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
-    col4.markdown(f'<div class="card info">Faturado no Dia<br><b>R$ {valor_dia:,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
-    col5.markdown(f'<div class="card info">Faturado na Semana<br><b>R$ {valor_semana:,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
+    col1.markdown(f'<div class="card meta"><span class="card-title">Meta Mensal</span><b>R$ {META_MENSAL:,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
+    col2.markdown(f'<div class="card realizado"><span class="card-title">Faturado no Mês</span><b>R$ {realizado:,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
+    col3.markdown(f'<div class="card pendente"><span class="card-title">Pendente</span><b>R$ {pendente:,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
+    col4.markdown(f'<div class="card info"><span class="card-title">Faturado no Dia</span><b>R$ {valor_dia:,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
+    col5.markdown(f'<div class="card info"><span class="card-title">Faturado na Semana</span><b>R$ {valor_semana:,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
 
     # ================== LINHA 2 ==================
     fig_termo = go.Figure()
@@ -137,7 +143,7 @@ else:
         orientation='h',
         marker=dict(color=COLOR_PENDENTE)
     ))
-    fig_termo.update_layout(barmode='stack', height=125, margin=dict(t=20, b=20), showlegend=True)
+    fig_termo.update_layout(barmode='stack', height=80, margin=dict(t=10, b=10), showlegend=True)
     st.plotly_chart(fig_termo, use_container_width=True)
 
     # ================== LINHA 3 ==================
@@ -149,7 +155,7 @@ else:
         ultimos['Data Emissão'] = ultimos['Data Emissão'].dt.strftime('%d/%m/%Y')
         ultimos_view = ultimos[['Data Emissão', 'Cliente', 'Vendedor', 'Total Produto']].head(20)
         ultimos_view['Total Produto'] = ultimos_view['Total Produto'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-        st.dataframe(ultimos_view, height=550)
+        st.dataframe(ultimos_view, height=275)
 
     with col2:
         st.markdown("### Ranking de Vendedores")
@@ -164,8 +170,8 @@ else:
         )
         fig_ranking.update_traces(textposition='outside')
         fig_ranking.update_layout(
-            height=550,
-            margin=dict(t=20),
+            height=275,
+            margin=dict(t=10),
             yaxis=dict(autorange="reversed")
         )
         st.plotly_chart(fig_ranking, use_container_width=True)
@@ -196,6 +202,6 @@ else:
         showarrow=True,
         arrowhead=1
     )
-    fig_acum.update_layout(height=350, margin=dict(t=20))
+    fig_acum.update_layout(height=175, margin=dict(t=10, b=10))
     fig_acum.update_yaxes(tickformat=".2f")
     st.plotly_chart(fig_acum, use_container_width=True)
