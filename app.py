@@ -116,16 +116,18 @@ else:
     fig_termo.update_layout(barmode='stack', height=125, margin=dict(t=20, b=20), showlegend=True)
     st.plotly_chart(fig_termo, use_container_width=True)
 
-    col1, col2 = st.columns([1, 1])
+    col1, col2 = st.columns([2, 1])
 
     with col1:
+        st.markdown("### Últimos faturamentos")
         ultimos = df_mes.sort_values(by='Data Emissão', ascending=False).head(10)
         ultimos['Data Emissão'] = ultimos['Data Emissão'].dt.strftime('%d/%m/%Y')
         ultimos_view = ultimos[['Data Emissão', 'Cliente', 'Vendedor', 'Total Produto']]
         ultimos_view['Total Produto'] = ultimos_view['Total Produto'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-        st.dataframe(ultimos_view, height=360)
+        st.dataframe(ultimos_view, height=500)
 
     with col2:
+        st.markdown("### Ranking de Vendedores")
         ranking = df_mes.groupby('Vendedor')['Total Produto'].sum().sort_values(ascending=False).head(10).reset_index()
         fig_ranking = px.bar(
             ranking,
@@ -136,21 +138,8 @@ else:
         )
         fig_ranking.update_traces(textposition='outside')
         fig_ranking.update_layout(
-            height=360,
+            height=500,
             margin=dict(t=20),
             yaxis=dict(autorange="reversed")
         )
-        st.plotly_chart(fig_ranking, use_container_width=True)
-
-    df_mes['Dia'] = df_mes['Data Emissão'].dt.day
-    acumulado = df_mes.groupby('Dia')['Total Produto'].sum().cumsum().reset_index()
-    acumulado['Meta Linear'] = (META_MENSAL / dias_mes) * acumulado['Dia']
-    fig_acum = px.line(
-        acumulado,
-        x='Dia',
-        y=['Total Produto', 'Meta Linear'],
-        labels={'value': 'R$', 'variable': 'Legenda'}
-    )
-    fig_acum.update_layout(height=350, margin=dict(t=20))
-    fig_acum.update_yaxes(tickformat=".2f")
-    st.plotly_chart(fig_acum, use_container_width=True)
+        st.plotly_c
