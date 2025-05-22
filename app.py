@@ -120,9 +120,9 @@ else:
         name='',
         orientation='h',
         marker=dict(color=COLOR_REALIZADO),
-        text=[f'Realizado<br>R$ {realizado:,.2f}<br>{perc_realizado:.1f}%'.replace(",", "X").replace(".", ",").replace("X", ".")],
+        text=[f'Realizado - R$ {realizado:,.2f} - {perc_realizado:.1f}%'.replace(",", "X").replace(".", ",").replace("X", ".")],
         textposition='inside',
-        textfont=dict(size=18),
+        textfont=dict(size=16),
         insidetextanchor='start'
     ))
     fig_termo.add_trace(go.Bar(
@@ -131,9 +131,9 @@ else:
         name='',
         orientation='h',
         marker=dict(color=COLOR_PENDENTE),
-        text=[f'Falta<br>R$ {pendente:,.2f}<br>{100 - perc_realizado:.1f}%'.replace(",", "X").replace(".", ",").replace("X", ".")],
+        text=[f'Falta - R$ {pendente:,.2f} - {100 - perc_realizado:.1f}%'.replace(",", "X").replace(".", ",").replace("X", ".")],
         textposition='inside',
-        textfont=dict(size=18),
+        textfont=dict(size=16),
         insidetextanchor='start'
     ))
     fig_termo.update_layout(barmode='stack', height=80, margin=dict(t=10, b=10), showlegend=False)
@@ -167,9 +167,8 @@ else:
         )
         fig_ranking.update_traces(
             textposition='inside',
-            textfont=dict(size=16),
-            insidetextanchor='start',
-            texttemplate='<span style="background-color:rgba(125,187,241,0.6); padding:2px; border-radius:4px">%{text}</span>'
+            textfont=dict(size=14),
+            insidetextanchor='start'
         )
         fig_ranking.update_layout(
             height=525,
