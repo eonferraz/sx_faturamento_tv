@@ -72,14 +72,30 @@ else:
     valor_dia = df_dia['Total Produto'].sum()
     valor_semana = df_semana['Total Produto'].sum()
 
-    col1, col2, col3, col4, col5 = st.columns(5)
-    col1.metric("Meta Mensal", f"R$ {META_MENSAL:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-    col2.metric("Faturado no Mês", f"R$ {realizado:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-    col3.metric("Pendente", f"R$ {pendente:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-    col4.metric("Faturado no Dia", f"R$ {valor_dia:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-    col5.metric("Faturado na Semana", f"R$ {valor_semana:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+    st.markdown("""
+        <style>
+        .card {
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 10px;
+            color: white;
+            text-align: center;
+            font-size: 18px;
+        }
+        .meta { background-color: #1f77b4; }
+        .realizado { background-color: #2ca02c; }
+        .pendente { background-color: #d62728; }
+        .info { background-color: #6c757d; }
+        </style>
+    """, unsafe_allow_html=True)
 
-    # Termômetro com %
+    col1, col2, col3, col4, col5 = st.columns(5)
+    col1.markdown(f'<div class="card meta">Meta Mensal<br><b>R$ {META_MENSAL:,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
+    col2.markdown(f'<div class="card realizado">Faturado no Mês<br><b>R$ {realizado:,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
+    col3.markdown(f'<div class="card pendente">Pendente<br><b>R$ {pendente:,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
+    col4.markdown(f'<div class="card info">Faturado no Dia<br><b>R$ {valor_dia:,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
+    col5.markdown(f'<div class="card info">Faturado na Semana<br><b>R$ {valor_semana:,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
+
     fig_termo = go.Figure()
     fig_termo.add_trace(go.Bar(
         y=['Meta'],
@@ -100,7 +116,6 @@ else:
     fig_termo.update_layout(barmode='stack', height=125, margin=dict(t=20, b=20), showlegend=True)
     st.plotly_chart(fig_termo, use_container_width=True)
 
-    # Linha 2 - Tabela + Gráfico
     col1, col2 = st.columns([1, 1])
 
     with col1:
@@ -112,13 +127,12 @@ else:
 
     with col2:
         ranking = df_mes.groupby('Vendedor')['Total Produto'].sum().sort_values(ascending=False).head(10).reset_index()
-        ranking['Total Produto'] = ranking['Total Produto'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
         fig_ranking = px.bar(
             ranking,
             y='Vendedor',
             x='Total Produto',
             orientation='h',
-            text='Total Produto'
+            text=ranking['Total Produto'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
         )
         fig_ranking.update_traces(textposition='outside')
         fig_ranking.update_layout(
@@ -128,7 +142,6 @@ else:
         )
         st.plotly_chart(fig_ranking, use_container_width=True)
 
-    # Linha 3 - Faturamento acumulado x Meta
     df_mes['Dia'] = df_mes['Data Emissão'].dt.day
     acumulado = df_mes.groupby('Dia')['Total Produto'].sum().cumsum().reset_index()
     acumulado['Meta Linear'] = (META_MENSAL / dias_mes) * acumulado['Dia']
