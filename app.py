@@ -176,4 +176,4 @@ else:
             margin=dict(t=10),
             yaxis=dict(autorange="reversed", tickfont=dict(size=16))
         )
-        st.plotly_chart(f
+        st.plotly_chart(fig_ranking, use_container_width=True)
