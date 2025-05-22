@@ -4,6 +4,7 @@ import pyodbc
 import os
 from datetime import datetime, timedelta
 import plotly.express as px
+import plotly.graph_objects as go
 
 st.set_page_config(page_title="Dashboard de Faturamento", layout="wide")
 st.title("📦 Dashboard de Faturamento - SX Group")
@@ -11,7 +12,6 @@ st.title("📦 Dashboard de Faturamento - SX Group")
 META_MENSAL = 5_000_000
 
 # Função de conexão
-
 def get_faturamento_data():
     try:
         conn_str = (
@@ -67,12 +67,29 @@ else:
 
     df_mes = df[(df['Data Emissão'].dt.month == mes_atual) & (df['Data Emissão'].dt.year == ano_atual)]
 
-    # Linha 1 - Termômetro
+    # Linha 1 - Termômetro (barra empilhada horizontal)
     realizado = df_mes['Total Produto'].sum()
     pendente = max(META_MENSAL - realizado, 0)
+
     st.subheader(f"Meta Mensal: R$ {META_MENSAL:,.2f} | Realizado: R$ {realizado:,.2f}")
-    st.progress(min(realizado / META_MENSAL, 1.0))
-    st.bar_chart(pd.DataFrame({'Realizado': [realizado], 'Pendente': [pendente]}).T)
+
+    fig_termo = go.Figure()
+    fig_termo.add_trace(go.Bar(
+        y=['Meta'],
+        x=[realizado],
+        name='Realizado',
+        orientation='h',
+        marker=dict(color='green')
+    ))
+    fig_termo.add_trace(go.Bar(
+        y=['Meta'],
+        x=[pendente],
+        name='Pendente',
+        orientation='h',
+        marker=dict(color='lightgray')
+    ))
+    fig_termo.update_layout(barmode='stack', height=100, showlegend=True)
+    st.plotly_chart(fig_termo, use_container_width=True)
 
     # Linha 2 - Duas colunas
     col1, col2 = st.columns(2)
@@ -80,13 +97,26 @@ else:
     with col1:
         st.markdown("### 🧾 Últimos 10 faturamentos")
         ultimos = df_mes.sort_values(by='Data Emissão', ascending=False).head(10)
+        ultimos['Data Emissão'] = ultimos['Data Emissão'].dt.strftime('%d/%m/%Y')
         ultimos_view = ultimos[['Data Emissão', 'Cliente', 'Vendedor', 'Total Produto']]
+        ultimos_view['Total Produto'] = ultimos_view['Total Produto'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
         st.dataframe(ultimos_view)
 
     with col2:
         st.markdown("### 🏅 Top 5 Vendedores no mês")
         ranking = df_mes.groupby('Vendedor')['Total Produto'].sum().sort_values(ascending=False).head(5).reset_index()
-        fig_ranking = px.bar(ranking, x='Vendedor', y='Total Produto', text='Total Produto', title='Top Vendedores')
+        ranking['Total Produto'] = ranking['Total Produto'].round(2)
+        fig_ranking = px.bar(
+            ranking,
+            y='Vendedor',
+            x='Total Produto',
+            orientation='h',
+            text='Total Produto',
+            title='Top Vendedores'
+        )
+        fig_ranking.update_traces(texttemplate='%{text:.2s}', textposition='outside')
+        fig_ranking.update_layout(xaxis_tickformat=",.2f", yaxis=dict(autorange="reversed"))
+        fig_ranking.update_layout(height=300)
         st.plotly_chart(fig_ranking, use_container_width=True)
 
     # Linha 3 - Faturamento acumulado x Meta
@@ -94,7 +124,13 @@ else:
     df_mes['Dia'] = df_mes['Data Emissão'].dt.day
     acumulado = df_mes.groupby('Dia')['Total Produto'].sum().cumsum().reset_index()
     acumulado['Meta Linear'] = (META_MENSAL / dias_mes) * acumulado['Dia']
-    fig_acum = px.line(acumulado, x='Dia', y=['Total Produto', 'Meta Linear'],
-                       labels={'value': 'R$', 'variable': 'Legenda'},
-                       title='Faturamento Acumulado vs. Meta Linear')
+    fig_acum = px.line(
+        acumulado,
+        x='Dia',
+        y=['Total Produto', 'Meta Linear'],
+        labels={'value': 'R$', 'variable': 'Legenda'},
+        title='Faturamento Acumulado vs. Meta Linear'
+    )
+    fig_acum.update_layout(height=350)
+    fig_acum.update_yaxes(tickformat=".2f")
     st.plotly_chart(fig_acum, use_container_width=True)
