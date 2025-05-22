@@ -19,7 +19,6 @@ def get_faturamento_data():
         df = pd.read_sql(query, conn)
         conn.close()
         return df
-
     except Exception as e:
-        print(f"Erro: {e}")
+        print(f"Erro ao consultar dados: {e}")
         return pd.DataFrame()
