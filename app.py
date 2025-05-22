@@ -20,7 +20,6 @@ COLOR_GRAF_2 = '#006A5444'
 COLOR_GRAF_3 = '#C0C0C0'
 COLOR_GRAF_4 = '#0A2601'
 COLOR_GRAF_5 = '#3FC6A0'
-COLOR_BORDA = '#0A2601'  # azul escuro para borda
 
 # Função de conexão
 def get_faturamento_data():
@@ -95,21 +94,16 @@ else:
             text-align: center;
         }}
         .card b {{
-            font-size: 24px;
+            font-size: 32px;
         }}
         .card-title {{
-            font-size: 14px;
+            font-size: 16px;
             display: block;
         }}
         .meta {{ background-color: {COLOR_META}; }}
         .realizado {{ background-color: {COLOR_REALIZADO}; }}
         .pendente {{ background-color: {COLOR_PENDENTE}; }}
         .info {{ background-color: #6c757d; }}
-        .stPlotlyChart > div {{
-            border-radius: 8px;
-            border: 1px solid {COLOR_BORDA};
-            padding: 6px;
-        }}
         </style>
     """, unsafe_allow_html=True)
 
@@ -129,7 +123,8 @@ else:
         orientation='h',
         marker=dict(color=COLOR_REALIZADO),
         text=[f'Realizado\nR$ {realizado:,.0f}\n{perc_realizado:.1f}%'.replace(",", "X").replace(".", ",").replace("X", ".")],
-        textposition='inside'
+        textposition='inside',
+        textfont=dict(size=16)
     ))
     fig_termo.add_trace(go.Bar(
         y=['Meta'],
@@ -138,7 +133,8 @@ else:
         orientation='h',
         marker=dict(color=COLOR_PENDENTE),
         text=[f'Pendente\nR$ {pendente:,.0f}\n{100 - perc_realizado:.1f}%'.replace(",", "X").replace(".", ",").replace("X", ".")],
-        textposition='inside'
+        textposition='inside',
+        textfont=dict(size=16)
     ))
     fig_termo.update_layout(barmode='stack', height=80, margin=dict(t=10, b=10), showlegend=False)
     st.plotly_chart(fig_termo, use_container_width=True)
@@ -152,7 +148,7 @@ else:
         ultimos['Data Emissão'] = ultimos['Data Emissão'].dt.strftime('%d/%m/%Y')
         ultimos_view = ultimos[['Data Emissão', 'Cliente', 'Vendedor', 'Total Produto']].head(20)
         ultimos_view['Total Produto'] = ultimos_view['Total Produto'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-        st.dataframe(ultimos_view, height=440)
+        st.dataframe(ultimos_view, height=480)
 
     with col2:
         st.markdown("### Ranking de Vendedores")
@@ -165,7 +161,7 @@ else:
             color_discrete_sequence=[COLOR_GRAF_4],
             text=ranking['Total Produto'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
         )
-        fig_ranking.update_traces(textposition='outside')
+        fig_ranking.update_traces(textposition='inside')
         fig_ranking.update_layout(
             height=525,
             margin=dict(t=10),
