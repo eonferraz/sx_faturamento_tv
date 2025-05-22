@@ -122,7 +122,7 @@ else:
         marker=dict(color=COLOR_REALIZADO),
         text=[f'Realizado - R$ {realizado:,.2f} - {perc_realizado:.1f}%'.replace(",", "X").replace(".", ",").replace("X", ".")],
         textposition='inside',
-        textfont=dict(size=16),
+        textfont=dict(size=24),
         insidetextanchor='start'
     ))
     fig_termo.add_trace(go.Bar(
@@ -133,7 +133,7 @@ else:
         marker=dict(color=COLOR_PENDENTE),
         text=[f'Falta - R$ {pendente:,.2f} - {100 - perc_realizado:.1f}%'.replace(",", "X").replace(".", ",").replace("X", ".")],
         textposition='inside',
-        textfont=dict(size=16),
+        textfont=dict(size=24),
         insidetextanchor='start'
     ))
     fig_termo.update_layout(barmode='stack', height=80, margin=dict(t=10, b=10), showlegend=False)
