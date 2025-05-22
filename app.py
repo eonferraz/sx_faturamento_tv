@@ -124,22 +124,22 @@ else:
     fig_termo.add_trace(go.Bar(
         y=['Meta'],
         x=[realizado],
-        name=f'Realizado R$ {realizado:,.2f}'.replace(",", "X").replace(".", ",").replace("X", "."),
+        name='',
         orientation='h',
         marker=dict(color=COLOR_REALIZADO),
-        text=f'{perc_realizado:.1f}%',
+        text=[f'Realizado\nR$ {realizado:,.0f}\n{perc_realizado:.1f}%'.replace(",", "X").replace(".", ",").replace("X", ".")],
         textposition='inside'
     ))
     fig_termo.add_trace(go.Bar(
         y=['Meta'],
         x=[pendente],
-        name=f'Pendente R$ {pendente:,.2f}'.replace(",", "X").replace(".", ",").replace("X", "."),
+        name='',
         orientation='h',
         marker=dict(color=COLOR_PENDENTE),
-        text=f'{100 - perc_realizado:.1f}%',
+        text=[f'Pendente\nR$ {pendente:,.0f}\n{100 - perc_realizado:.1f}%'.replace(",", "X").replace(".", ",").replace("X", ".")],
         textposition='inside'
     ))
-    fig_termo.update_layout(barmode='stack', height=80, margin=dict(t=10, b=10), showlegend=True)
+    fig_termo.update_layout(barmode='stack', height=80, margin=dict(t=10, b=10), showlegend=False)
     st.plotly_chart(fig_termo, use_container_width=True)
 
     # ================== LINHA 3 ==================
@@ -151,7 +151,7 @@ else:
         ultimos['Data Emissão'] = ultimos['Data Emissão'].dt.strftime('%d/%m/%Y')
         ultimos_view = ultimos[['Data Emissão', 'Cliente', 'Vendedor', 'Total Produto']].head(20)
         ultimos_view['Total Produto'] = ultimos_view['Total Produto'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-        st.dataframe(ultimos_view, height=310)
+        st.dataframe(ultimos_view, height=400)
 
     with col2:
         st.markdown("### Ranking de Vendedores")
@@ -166,7 +166,7 @@ else:
         )
         fig_ranking.update_traces(textposition='outside')
         fig_ranking.update_layout(
-            height=310,
+            height=525,
             margin=dict(t=10),
             yaxis=dict(autorange="reversed")
         )
