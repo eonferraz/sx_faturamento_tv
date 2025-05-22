@@ -1,25 +1,25 @@
-# db_utils.py
-import pandas as pd
 import pyodbc
-import streamlit as st
-from functools import lru_cache
+import pandas as pd
+import os
 
-# Usa cache para performance
-@st.cache_data(show_spinner="Conectando ao banco de dados...")
-def get_data():
-    server = 'benu.database.windows.net'
-    database = 'benu'
-    username = 'eduardo.ferraz'
-    password = '8h!0+a~jL8]B6~^5s5+v'
-
-    conn_str = (
-        f'DRIVER={{ODBC Driver 17 for SQL Server}};'
-        f'SERVER={server};DATABASE={database};UID={username};PWD={password}'
-    )
-
-    query = "SELECT * FROM nacional_faturamento WHERE receita IS NOT NULL"
-
-    with pyodbc.connect(conn_str) as conn:
+def get_faturamento_data():
+    try:
+        conn_str = f"""
+            DRIVER={{ODBC Driver 17 for SQL Server}};
+            SERVER={os.getenv('DB_SERVER')};
+            DATABASE={os.getenv('DB_NAME')};
+            UID={os.getenv('DB_USER')};
+            PWD={os.getenv('DB_PASS')};
+            TrustServerCertificate=yes;
+        """
+        with open('query.sql', 'r', encoding='utf-8') as f:
+            query = f.read()
+        
+        conn = pyodbc.connect(conn_str)
         df = pd.read_sql(query, conn)
+        conn.close()
+        return df
 
-    return df
+    except Exception as e:
+        print(f"Erro: {e}")
+        return pd.DataFrame()
