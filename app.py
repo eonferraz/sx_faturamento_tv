@@ -34,5 +34,8 @@ df = get_faturamento_data()
 if df.empty:
     st.warning("Nenhum dado retornado.")
 else:
+    # Corrigir colunas duplicadas automaticamente
+    df.columns = pd.io.parsers.ParserBase({'names':df.columns})._maybe_dedup_names(df.columns)
+    
     st.dataframe(df)
     st.bar_chart(df.groupby("Filial")["Total Produto"].sum())
