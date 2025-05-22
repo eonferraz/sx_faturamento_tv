@@ -67,12 +67,16 @@ else:
 
     df_mes = df[(df['Data Emissão'].dt.month == mes_atual) & (df['Data Emissão'].dt.year == ano_atual)]
 
-    # Linha 1 - Termômetro (barra empilhada horizontal)
+    # Linha 1 - Cards de meta
     realizado = df_mes['Total Produto'].sum()
     pendente = max(META_MENSAL - realizado, 0)
 
-    st.subheader(f"Meta Mensal: R$ {META_MENSAL:,.2f} | Realizado: R$ {realizado:,.2f}")
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Meta Mensal", f"R$ {META_MENSAL:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+    col2.metric("Faturado no Mês", f"R$ {realizado:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+    col3.metric("Pendente", f"R$ {pendente:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
+    # Termômetro (barra empilhada horizontal mais gordinha)
     fig_termo = go.Figure()
     fig_termo.add_trace(go.Bar(
         y=['Meta'],
@@ -88,7 +92,7 @@ else:
         orientation='h',
         marker=dict(color='lightgray')
     ))
-    fig_termo.update_layout(barmode='stack', height=100, showlegend=True)
+    fig_termo.update_layout(barmode='stack', height=200, showlegend=True)
     st.plotly_chart(fig_termo, use_container_width=True)
 
     # Linha 2 - Duas colunas
@@ -114,7 +118,7 @@ else:
             text='Total Produto',
             title='Top Vendedores'
         )
-        fig_ranking.update_traces(texttemplate='%{text:.2s}', textposition='outside')
+        fig_ranking.update_traces(texttemplate='%{text:.2f}', textposition='outside')
         fig_ranking.update_layout(xaxis_tickformat=",.2f", yaxis=dict(autorange="reversed"))
         fig_ranking.update_layout(height=300)
         st.plotly_chart(fig_ranking, use_container_width=True)
