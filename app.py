@@ -1,120 +1,32 @@
 import streamlit as st
 import pandas as pd
-import pyodbc
-from io import BytesIO
-from datetime import datetime
-import base64
+from utils.db import get_faturamento_data
 
-st.set_page_config(page_title="Exportar Faturamento", layout="wide")
+st.set_page_config(page_title="Dashboard de Faturamento", layout="wide")
 
-@st.cache_resource
-def carregar_dados():
-    conn_str = (
-        'DRIVER={ODBC Driver 17 for SQL Server};'
-        'SERVER=benu.database.windows.net,1433;'
-        'DATABASE=benu;'
-        'UID=eduardo.ferraz;'
-        'PWD=8h!0+a~jL8]B6~^5s5+v'
-    )
-    conn = pyodbc.connect(conn_str)
-    query = """
-        SELECT
-          numero_nf AS "Número NF",
-          data_negociacao AS "Data Negociação",
-          data_faturamento AS "Data Faturamento",
-          ano_mes AS "Ano-Mês",
-          ano AS "Ano",
-          mes AS "Mês",
-          data_entrada AS "Data Entrada",
-          cod_parceiro AS "Código Parceiro",
-          cod_projeto AS "Código Projeto",
-          abrev_projeto AS "Abrev. Projeto",
-          projeto AS "Projeto",
-          cnpj AS "CNPJ",
-          parceiro AS "Parceiro",
-          cod_top AS "Código TOP",
-          [top] AS "TOP",
-          movimento AS "Movimento",
-          cliente AS "Cliente",
-          fornecedor AS "Fornecedor",
-          codigo AS "Código Produto",
-          descricao AS "Descrição",
-          ncm AS "NCM",
-          grupo AS "Grupo",
-          cfop AS "CFOP",
-          operacao AS "Operação",
-          qtd_negociada AS "Qtd. Negociada",
-          qtd_entregue AS "Qtd. Entregue",
-          status AS "Status",
-          saldo AS "Saldo",
-          valor_unitario AS "Valor Unitário",
-          valor_total AS "Valor Total",
-          valor_icms AS "Valor ICMS",
-          valor_ipi AS "Valor IPI",
-          receita AS "Receita"
-        FROM
-          nacional_faturamento;
-    """
-    df = pd.read_sql(query, conn)
-    conn.close()
-    df['Data Faturamento'] = pd.to_datetime(df['Data Faturamento'], errors='coerce')
-    return df
+st.title("📦 Dashboard de Faturamento - SX Group")
 
-# Codifica imagem da logo
-with open("nacional-escuro.svg", "rb") as image_file:
-    encoded = base64.b64encode(image_file.read()).decode()
-logo_img = f"data:image/svg+xml;base64,{encoded}"
+df = get_faturamento_data()
 
-# Header com logo e título alinhados verticalmente ao centro
-st.markdown(f"""
-    <div style='display: flex; align-items: center; gap: 20px;'>
-        <img src='{logo_img}' width='80'>
-        <h1 style='margin: 0;'>Dados de Faturamento</h1>
-    </div>
-""", unsafe_allow_html=True)
+if df.empty:
+    st.warning("Nenhum dado encontrado.")
+else:
+    with st.sidebar:
+        st.markdown("## Filtros")
+        filiais = st.multiselect("Filial", df["Filial"].unique(), default=df["Filial"].unique())
+        tipos = st.multiselect("Tipo Documento", df["Tipo Doc"].unique(), default=df["Tipo Doc"].unique())
+        clientes = st.multiselect("Cliente", df["Cliente"].unique(), default=df["Cliente"].unique())
 
-# Carrega dados
-original_df = carregar_dados()
+    df_filtered = df[
+        (df["Filial"].isin(filiais)) &
+        (df["Tipo Doc"].isin(tipos)) &
+        (df["Cliente"].isin(clientes))
+    ]
 
-# Filtros
-st.sidebar.header("Filtros")
-hoje = datetime.today()
-data_inicio = st.sidebar.date_input("Data Inicial", value=datetime(hoje.year, 1, 1))
-data_fim = st.sidebar.date_input("Data Final", value=hoje)
+    st.metric("Total Faturado", f"R$ {df_filtered['Total Produto'].sum():,.2f}")
+    st.metric("CMV Total", f"R$ {df_filtered['CMV'].sum():,.2f}")
+    
+    st.dataframe(df_filtered)
 
-parceiros = original_df['Parceiro'].dropna().unique().tolist()
-operacoes = original_df['Operação'].dropna().unique().tolist()
+    st.bar_chart(df_filtered.groupby("Filial")["Total Produto"].sum())
 
-filtro_parceiro = st.sidebar.multiselect("Parceiro", parceiros)
-filtro_operacao = st.sidebar.multiselect("Operação", operacoes)
-
-# Aplica filtros
-df = original_df.copy()
-df = df[df['Data Faturamento'].notna()]
-df = df[(df['Data Faturamento'] >= pd.to_datetime(data_inicio)) & (df['Data Faturamento'] <= pd.to_datetime(data_fim))]
-if filtro_parceiro:
-    df = df[df['Parceiro'].isin(filtro_parceiro)]
-if filtro_operacao:
-    df = df[df['Operação'].isin(filtro_operacao)]
-
-# Exibe dados
-st.dataframe(df, use_container_width=True)
-
-# Exporta para Excel com ajuste de largura
-buffer = BytesIO()
-with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
-    df.to_excel(writer, sheet_name='Faturamento', index=False)
-    workbook = writer.book
-    worksheet = writer.sheets['Faturamento']
-    for i, col in enumerate(df.columns):
-        largura = max(df[col].astype(str).map(len).max(), len(col)) + 2
-        worksheet.set_column(i, i, largura)
-
-nome_arquivo = f"faturamento_filtrado_{datetime.today().strftime('%Y%m%d')}.xlsx"
-
-st.download_button(
-    label="📥 Baixar Excel",
-    data=buffer.getvalue(),
-    file_name=nome_arquivo,
-    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-)
