@@ -165,37 +165,7 @@ else:
         fig_ranking.update_traces(textposition='outside')
         fig_ranking.update_layout(
             height=275,
-            margin=dict(t=10),
+            margin=dict(t=5),
             yaxis=dict(autorange="reversed")
         )
         st.plotly_chart(fig_ranking, use_container_width=True)
-
-    # ================== LINHA 4 ==================
-    df_mes['Dia'] = df_mes['Data Emissão'].dt.day
-    acumulado = df_mes.groupby('Dia')['Total Produto'].sum().cumsum().reset_index()
-    acumulado['Meta Linear'] = (META_MENSAL / dias_mes) * acumulado['Dia']
-
-    dia_atual = hoje.day
-    valor_hoje = acumulado[acumulado['Dia'] == dia_atual]['Total Produto'].values[0] if dia_atual in acumulado['Dia'].values else 0
-    perc_dia = (valor_hoje / META_MENSAL) * 100
-
-    fig_acum = px.line(
-        acumulado,
-        x='Dia',
-        y=['Total Produto', 'Meta Linear'],
-        labels={'value': 'R$', 'variable': 'Legenda'},
-        color_discrete_map={
-            'Total Produto': COLOR_REALIZADO,
-            'Meta Linear': COLOR_META
-        }
-    )
-    fig_acum.add_annotation(
-        x=dia_atual,
-        y=valor_hoje,
-        text=f"{perc_dia:.1f}%",
-        showarrow=True,
-        arrowhead=1
-    )
-    fig_acum.update_layout(height=175, margin=dict(t=10, b=10))
-    fig_acum.update_yaxes(tickformat=".2f")
-    st.plotly_chart(fig_acum, use_container_width=True)
