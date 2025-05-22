@@ -31,10 +31,6 @@ def get_faturamento_data():
 
 df = get_faturamento_data()
 
-if df.empty:
-    st.warning("Nenhum dado retornado.")
-else:
-    # Corrigir colunas duplicadas automaticamente
     def dedup_columns(columns):
         seen = {}
         new_columns = []
@@ -45,9 +41,5 @@ else:
             else:
                 seen[col] = 0
                 new_columns.append(col)
-        return new_columns
+        return new_columns  # <-- Corrigido aqui
 
-    df.columns = dedup_columns(df.columns)
-
-    st.dataframe(df)
-    st.bar_chart(df.groupby("Filial")["Total Produto"].sum())
