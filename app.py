@@ -90,6 +90,7 @@ else:
     valor_dia = df_dia['Total Produto'].sum()
     valor_semana = df_semana['Total Produto'].sum()
 
+    # ================== LINHA 1 ==================
     st.markdown("""
         <style>
         .card {
@@ -118,6 +119,7 @@ else:
     col4.markdown(f'<div class="card info">Faturado no Dia<br><b>R$ {valor_dia:,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
     col5.markdown(f'<div class="card info">Faturado na Semana<br><b>R$ {valor_semana:,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
 
+    # ================== LINHA 2 ==================
     fig_termo = go.Figure()
     fig_termo.add_trace(go.Bar(
         y=['Meta'],
@@ -138,6 +140,7 @@ else:
     fig_termo.update_layout(barmode='stack', height=125, margin=dict(t=20, b=20), showlegend=True)
     st.plotly_chart(fig_termo, use_container_width=True)
 
+    # ================== LINHA 3 ==================
     col1, col2 = st.columns([2, 1])
 
     with col1:
@@ -167,6 +170,7 @@ else:
         )
         st.plotly_chart(fig_ranking, use_container_width=True)
 
+    # ================== LINHA 4 ==================
     df_mes['Dia'] = df_mes['Data Emissão'].dt.day
     acumulado = df_mes.groupby('Dia')['Total Produto'].sum().cumsum().reset_index()
     acumulado['Meta Linear'] = (META_MENSAL / dias_mes) * acumulado['Dia']
