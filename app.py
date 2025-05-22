@@ -17,6 +17,17 @@ st.markdown("""
 
 META_MENSAL = 5_000_000
 
+# Paleta de cores
+COLOR_REALIZADO = '#2ca02c'  # verde
+COLOR_PENDENTE = '#d62728'   # vermelho
+COLOR_META = '#1f77b4'       # azul
+COLOR_CINZA = '#c0c0c0'
+COLOR_GRAF_1 = '#00471611'
+COLOR_GRAF_2 = '#006A5444'
+COLOR_GRAF_3 = '#C0C0C0'
+COLOR_GRAF_4 = '#0A2601'
+COLOR_GRAF_5 = '#3FC6A0'
+
 # Função de conexão
 def get_faturamento_data():
     try:
@@ -113,7 +124,7 @@ else:
         x=[realizado],
         name='Realizado',
         orientation='h',
-        marker=dict(color='green'),
+        marker=dict(color=COLOR_REALIZADO),
         text=f'{perc_realizado:.1f}%',
         textposition='inside'
     ))
@@ -122,7 +133,7 @@ else:
         x=[pendente],
         name='Pendente',
         orientation='h',
-        marker=dict(color='lightgray')
+        marker=dict(color=COLOR_PENDENTE)
     ))
     fig_termo.update_layout(barmode='stack', height=125, margin=dict(t=20, b=20), showlegend=True)
     st.plotly_chart(fig_termo, use_container_width=True)
@@ -145,6 +156,7 @@ else:
             y='Vendedor',
             x='Total Produto',
             orientation='h',
+            color_discrete_sequence=[COLOR_GRAF_4],
             text=ranking['Total Produto'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
         )
         fig_ranking.update_traces(textposition='outside')
@@ -167,7 +179,11 @@ else:
         acumulado,
         x='Dia',
         y=['Total Produto', 'Meta Linear'],
-        labels={'value': 'R$', 'variable': 'Legenda'}
+        labels={'value': 'R$', 'variable': 'Legenda'},
+        color_discrete_map={
+            'Total Produto': COLOR_REALIZADO,
+            'Meta Linear': COLOR_META
+        }
     )
     fig_acum.add_annotation(
         x=dia_atual,
