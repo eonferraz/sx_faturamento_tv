@@ -105,9 +105,10 @@ else:
         .realizado {{ background-color: {COLOR_REALIZADO}; }}
         .pendente {{ background-color: {COLOR_PENDENTE}; }}
         .info {{ background-color: #6c757d; }}
-        .stPlotlyChart div div div div div canvas {{
-            border-radius: 8px !important;
-            border: 1px solid {COLOR_BORDA} !important;
+        .stPlotlyChart > div {{
+            border-radius: 8px;
+            border: 1px solid {COLOR_BORDA};
+            padding: 6px;
         }}
         </style>
     """, unsafe_allow_html=True)
@@ -151,7 +152,7 @@ else:
         ultimos['Data Emissão'] = ultimos['Data Emissão'].dt.strftime('%d/%m/%Y')
         ultimos_view = ultimos[['Data Emissão', 'Cliente', 'Vendedor', 'Total Produto']].head(20)
         ultimos_view['Total Produto'] = ultimos_view['Total Produto'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-        st.dataframe(ultimos_view, height=400)
+        st.dataframe(ultimos_view, height=440)
 
     with col2:
         st.markdown("### Ranking de Vendedores")
