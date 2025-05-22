@@ -40,7 +40,6 @@ df = get_faturamento_data()
 if df.empty:
     st.warning("Nenhum dado retornado.")
 else:
-    # Corrigir colunas duplicadas automaticamente
     def dedup_columns(columns):
         seen = {}
         new_columns = []
@@ -54,8 +53,6 @@ else:
         return new_columns
 
     df.columns = dedup_columns(df.columns)
-
-    # Filtros de data e receita
     df['Data Emissão'] = pd.to_datetime(df['Data Emissão'])
     df = df[df['Receita'] == 'SIM']
 
@@ -69,23 +66,29 @@ else:
     inicio_semana = hoje - timedelta(days=hoje.weekday())
     df_semana = df[df['Data Emissão'].dt.date >= inicio_semana.date()]
 
-    # Linha 1 - Cards de meta
     realizado = df_mes['Total Produto'].sum()
     pendente = max(META_MENSAL - realizado, 0)
+    perc_realizado = min(realizado / META_MENSAL * 100, 100)
+    valor_dia = df_dia['Total Produto'].sum()
+    valor_semana = df_semana['Total Produto'].sum()
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4, col5 = st.columns(5)
     col1.metric("Meta Mensal", f"R$ {META_MENSAL:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
     col2.metric("Faturado no Mês", f"R$ {realizado:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
     col3.metric("Pendente", f"R$ {pendente:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+    col4.metric("Faturado no Dia", f"R$ {valor_dia:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+    col5.metric("Faturado na Semana", f"R$ {valor_semana:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
-    # Termômetro
+    # Termômetro com %
     fig_termo = go.Figure()
     fig_termo.add_trace(go.Bar(
         y=['Meta'],
         x=[realizado],
         name='Realizado',
         orientation='h',
-        marker=dict(color='green')
+        marker=dict(color='green'),
+        text=f'{perc_realizado:.1f}%',
+        textposition='inside'
     ))
     fig_termo.add_trace(go.Bar(
         y=['Meta'],
@@ -94,7 +97,7 @@ else:
         orientation='h',
         marker=dict(color='lightgray')
     ))
-    fig_termo.update_layout(barmode='stack', height=250, margin=dict(t=20, b=20), showlegend=True)
+    fig_termo.update_layout(barmode='stack', height=125, margin=dict(t=20, b=20), showlegend=True)
     st.plotly_chart(fig_termo, use_container_width=True)
 
     # Linha 2 - Tabela + Gráfico
@@ -107,17 +110,9 @@ else:
         ultimos_view['Total Produto'] = ultimos_view['Total Produto'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
         st.dataframe(ultimos_view, height=360)
 
-        # Faturamento do dia e semana
-        valor_dia = df_dia['Total Produto'].sum()
-        valor_semana = df_semana['Total Produto'].sum()
-
-        st.markdown("####")
-        st.markdown(f"**Faturado no Dia:** R$ {valor_dia:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-        st.markdown(f"**Faturado na Semana:** R$ {valor_semana:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-
     with col2:
         ranking = df_mes.groupby('Vendedor')['Total Produto'].sum().sort_values(ascending=False).head(10).reset_index()
-        ranking['Total Produto'] = ranking['Total Produto'].round(2)
+        ranking['Total Produto'] = ranking['Total Produto'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
         fig_ranking = px.bar(
             ranking,
             y='Vendedor',
@@ -125,11 +120,10 @@ else:
             orientation='h',
             text='Total Produto'
         )
-        fig_ranking.update_traces(texttemplate='%{text:.2f}', textposition='outside')
+        fig_ranking.update_traces(textposition='outside')
         fig_ranking.update_layout(
             height=360,
             margin=dict(t=20),
-            xaxis_tickformat=",.2f",
             yaxis=dict(autorange="reversed")
         )
         st.plotly_chart(fig_ranking, use_container_width=True)
