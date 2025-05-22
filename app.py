@@ -120,9 +120,10 @@ else:
         name='',
         orientation='h',
         marker=dict(color=COLOR_REALIZADO),
-        text=[f'Realizado\nR$ {realizado:,.0f}\n{perc_realizado:.1f}%'.replace(",", "X").replace(".", ",").replace("X", ".")],
+        text=[f'Realizado<br>R$ {realizado:,.2f}<br>{perc_realizado:.1f}%'.replace(",", "X").replace(".", ",").replace("X", ".")],
         textposition='inside',
-        textfont=dict(size=18)
+        textfont=dict(size=18),
+        insidetextanchor='start'
     ))
     fig_termo.add_trace(go.Bar(
         y=['Meta'],
@@ -130,9 +131,10 @@ else:
         name='',
         orientation='h',
         marker=dict(color=COLOR_PENDENTE),
-        text=[f'Falta\nR$ {pendente:,.0f}\n{100 - perc_realizado:.1f}%'.replace(",", "X").replace(".", ",").replace("X", ".")],
+        text=[f'Falta<br>R$ {pendente:,.2f}<br>{100 - perc_realizado:.1f}%'.replace(",", "X").replace(".", ",").replace("X", ".")],
         textposition='inside',
-        textfont=dict(size=18)
+        textfont=dict(size=18),
+        insidetextanchor='start'
     ))
     fig_termo.update_layout(barmode='stack', height=80, margin=dict(t=10, b=10), showlegend=False)
     st.plotly_chart(fig_termo, use_container_width=True)
@@ -163,10 +165,15 @@ else:
             color_discrete_sequence=[COLOR_GRAF_4],
             text=ranking['Total Produto'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
         )
-        fig_ranking.update_traces(textposition='inside', textfont=dict(size=16))
+        fig_ranking.update_traces(
+            textposition='inside',
+            textfont=dict(size=16),
+            insidetextanchor='start',
+            texttemplate='<span style="background-color:rgba(125,187,241,0.6); padding:2px; border-radius:4px">%{text}</span>'
+        )
         fig_ranking.update_layout(
             height=525,
             margin=dict(t=10),
             yaxis=dict(autorange="reversed", tickfont=dict(size=16))
         )
-        st.plotly_chart(fig_ranking, use_container_width=True)
+        st.plotly_chart(f
