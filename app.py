@@ -1,32 +1,38 @@
 import streamlit as st
 import pandas as pd
-from utils.db import get_faturamento_data
+import pyodbc
+import os
 
 st.set_page_config(page_title="Dashboard de Faturamento", layout="wide")
-
 st.title("📦 Dashboard de Faturamento - SX Group")
+
+def get_faturamento_data():
+    try:
+        conn_str = (
+            "DRIVER={ODBC Driver 17 for SQL Server};"
+            "SERVER=sx.gruposps.com.br,14382;"
+            "DATABASE=SBO_SX2022;"
+            "UID=Sx;"
+            "PWD=Sx4dm1n@1234;"
+            "TrustServerCertificate=yes;"
+        )
+
+        with open('query.sql', 'r', encoding='utf-8') as f:
+            query = f.read()
+
+        conn = pyodbc.connect(conn_str)
+        df = pd.read_sql(query, conn)
+        conn.close()
+        return df
+
+    except Exception as e:
+        st.error(f"Erro ao carregar dados: {e}")
+        return pd.DataFrame()
 
 df = get_faturamento_data()
 
 if df.empty:
-    st.warning("Nenhum dado encontrado.")
+    st.warning("Nenhum dado retornado.")
 else:
-    with st.sidebar:
-        st.markdown("## Filtros")
-        filiais = st.multiselect("Filial", df["Filial"].unique(), default=df["Filial"].unique())
-        tipos = st.multiselect("Tipo Documento", df["Tipo Doc"].unique(), default=df["Tipo Doc"].unique())
-        clientes = st.multiselect("Cliente", df["Cliente"].unique(), default=df["Cliente"].unique())
-
-    df_filtered = df[
-        (df["Filial"].isin(filiais)) &
-        (df["Tipo Doc"].isin(tipos)) &
-        (df["Cliente"].isin(clientes))
-    ]
-
-    st.metric("Total Faturado", f"R$ {df_filtered['Total Produto'].sum():,.2f}")
-    st.metric("CMV Total", f"R$ {df_filtered['CMV'].sum():,.2f}")
-    
-    st.dataframe(df_filtered)
-
-    st.bar_chart(df_filtered.groupby("Filial")["Total Produto"].sum())
-
+    st.dataframe(df)
+    st.bar_chart(df.groupby("Filial")["Total Produto"].sum())
