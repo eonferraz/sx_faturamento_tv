@@ -124,7 +124,7 @@ else:
     fig_termo.add_trace(go.Bar(
         y=['Meta'],
         x=[realizado],
-        name='Realizado',
+        name=f'Realizado R$ {realizado:,.2f}'.replace(",", "X").replace(".", ",").replace("X", "."),
         orientation='h',
         marker=dict(color=COLOR_REALIZADO),
         text=f'{perc_realizado:.1f}%',
@@ -133,11 +133,13 @@ else:
     fig_termo.add_trace(go.Bar(
         y=['Meta'],
         x=[pendente],
-        name='Pendente',
+        name=f'Pendente R$ {pendente:,.2f}'.replace(",", "X").replace(".", ",").replace("X", "."),
         orientation='h',
-        marker=dict(color=COLOR_PENDENTE)
+        marker=dict(color=COLOR_PENDENTE),
+        text=f'{100 - perc_realizado:.1f}%',
+        textposition='inside'
     ))
-    fig_termo.update_layout(barmode='stack', height=80, margin=dict(t=10, b=10), showlegend=False)
+    fig_termo.update_layout(barmode='stack', height=80, margin=dict(t=10, b=10), showlegend=True)
     st.plotly_chart(fig_termo, use_container_width=True)
 
     # ================== LINHA 3 ==================
@@ -149,7 +151,7 @@ else:
         ultimos['Data Emissão'] = ultimos['Data Emissão'].dt.strftime('%d/%m/%Y')
         ultimos_view = ultimos[['Data Emissão', 'Cliente', 'Vendedor', 'Total Produto']].head(20)
         ultimos_view['Total Produto'] = ultimos_view['Total Produto'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-        st.dataframe(ultimos_view, height=275)
+        st.dataframe(ultimos_view, height=310)
 
     with col2:
         st.markdown("### Ranking de Vendedores")
@@ -164,8 +166,8 @@ else:
         )
         fig_ranking.update_traces(textposition='outside')
         fig_ranking.update_layout(
-            height=275,
-            margin=dict(t=5),
+            height=310,
+            margin=dict(t=10),
             yaxis=dict(autorange="reversed")
         )
         st.plotly_chart(fig_ranking, use_container_width=True)
