@@ -7,8 +7,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 st.set_page_config(page_title="Dashboard de Faturamento", layout="wide")
-
-META_MENSAL = 5_000_000
+  
+META_MENSAL = 6_493_506
 
 # Paleta de cores
 COLOR_REALIZADO = '#2ca02c'  # verde
@@ -121,7 +121,7 @@ else:
         orientation='h',
         marker=dict(color=COLOR_REALIZADO),
         text=[f'Realizado - R$ {realizado:,.2f} - {perc_realizado:.1f}%'.replace(",", "X").replace(".", ",").replace("X", ".")],
-        textposition='inside',
+        textposition='auto',
         textfont=dict(size=24),
         insidetextanchor='start'
     ))
@@ -166,7 +166,7 @@ else:
             text=ranking['Total Produto'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
         )
         fig_ranking.update_traces(
-            textposition='inside',
+            textposition='outside',
             textfont=dict(size=14),
             insidetextanchor='start'
         )
