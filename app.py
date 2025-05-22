@@ -8,6 +8,13 @@ import plotly.graph_objects as go
 
 st.set_page_config(page_title="Dashboard de Faturamento", layout="wide")
 
+# Título do Dashboard
+st.markdown("""
+    <h2 style='text-align: center; background-color: #f0f2f6; padding: 10px; border-radius: 10px;'>
+        SX Lighting – Faturamento
+    </h2>
+""", unsafe_allow_html=True)
+
 META_MENSAL = 5_000_000
 
 # Função de conexão
@@ -86,6 +93,10 @@ else:
         .realizado { background-color: #2ca02c; }
         .pendente { background-color: #d62728; }
         .info { background-color: #6c757d; }
+        .stPlotlyChart div div div div div canvas {
+            border-radius: 10px !important;
+            border: 1px solid #ddd !important;
+        }
         </style>
     """, unsafe_allow_html=True)
 
@@ -120,9 +131,9 @@ else:
 
     with col1:
         st.markdown("### Últimos faturamentos")
-        ultimos = df_mes.sort_values(by='Data Emissão', ascending=False).head(10)
+        ultimos = df_mes.sort_values(by='Data Emissão', ascending=False)
         ultimos['Data Emissão'] = ultimos['Data Emissão'].dt.strftime('%d/%m/%Y')
-        ultimos_view = ultimos[['Data Emissão', 'Cliente', 'Vendedor', 'Total Produto']]
+        ultimos_view = ultimos[['Data Emissão', 'Cliente', 'Vendedor', 'Total Produto']].head(20)
         ultimos_view['Total Produto'] = ultimos_view['Total Produto'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
         st.dataframe(ultimos_view, height=550)
 
@@ -147,11 +158,23 @@ else:
     df_mes['Dia'] = df_mes['Data Emissão'].dt.day
     acumulado = df_mes.groupby('Dia')['Total Produto'].sum().cumsum().reset_index()
     acumulado['Meta Linear'] = (META_MENSAL / dias_mes) * acumulado['Dia']
+
+    dia_atual = hoje.day
+    valor_hoje = acumulado[acumulado['Dia'] == dia_atual]['Total Produto'].values[0] if dia_atual in acumulado['Dia'].values else 0
+    perc_dia = (valor_hoje / META_MENSAL) * 100
+
     fig_acum = px.line(
         acumulado,
         x='Dia',
         y=['Total Produto', 'Meta Linear'],
         labels={'value': 'R$', 'variable': 'Legenda'}
+    )
+    fig_acum.add_annotation(
+        x=dia_atual,
+        y=valor_hoje,
+        text=f"{perc_dia:.1f}%",
+        showarrow=True,
+        arrowhead=1
     )
     fig_acum.update_layout(height=350, margin=dict(t=20))
     fig_acum.update_yaxes(tickformat=".2f")
