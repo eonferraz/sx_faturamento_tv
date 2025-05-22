@@ -8,13 +8,6 @@ import plotly.graph_objects as go
 
 st.set_page_config(page_title="Dashboard de Faturamento", layout="wide")
 
-# Título do Dashboard
-st.markdown("""
-    <h2 style='text-align: center; background-color: #f0f2f6; padding: 10px; border-radius: 10px;'>
-        SX Lighting – Faturamento
-    </h2>
-""", unsafe_allow_html=True)
-
 META_MENSAL = 5_000_000
 
 # Paleta de cores
@@ -27,6 +20,7 @@ COLOR_GRAF_2 = '#006A5444'
 COLOR_GRAF_3 = '#C0C0C0'
 COLOR_GRAF_4 = '#0A2601'
 COLOR_GRAF_5 = '#3FC6A0'
+COLOR_BORDA = '#0A2601'  # azul escuro para borda
 
 # Função de conexão
 def get_faturamento_data():
@@ -91,30 +85,30 @@ else:
     valor_semana = df_semana['Total Produto'].sum()
 
     # ================== LINHA 1 ==================
-    st.markdown("""
+    st.markdown(f"""
         <style>
-        .card {
+        .card {{
             border-radius: 10px;
             padding: 12px;
             margin-bottom: 10px;
             color: white;
             text-align: center;
-        }
-        .card b {
+        }}
+        .card b {{
             font-size: 24px;
-        }
-        .card-title {
+        }}
+        .card-title {{
             font-size: 14px;
             display: block;
-        }
-        .meta { background-color: #1f77b4; }
-        .realizado { background-color: #2ca02c; }
-        .pendente { background-color: #d62728; }
-        .info { background-color: #6c757d; }
-        .stPlotlyChart div div div div div canvas {
+        }}
+        .meta {{ background-color: {COLOR_META}; }}
+        .realizado {{ background-color: {COLOR_REALIZADO}; }}
+        .pendente {{ background-color: {COLOR_PENDENTE}; }}
+        .info {{ background-color: #6c757d; }}
+        .stPlotlyChart div div div div div canvas {{
             border-radius: 8px !important;
-            border: 1px solid #aaa !important;
-        }
+            border: 1px solid {COLOR_BORDA} !important;
+        }}
         </style>
     """, unsafe_allow_html=True)
 
@@ -143,7 +137,7 @@ else:
         orientation='h',
         marker=dict(color=COLOR_PENDENTE)
     ))
-    fig_termo.update_layout(barmode='stack', height=80, margin=dict(t=10, b=10), showlegend=True)
+    fig_termo.update_layout(barmode='stack', height=80, margin=dict(t=10, b=10), showlegend=False)
     st.plotly_chart(fig_termo, use_container_width=True)
 
     # ================== LINHA 3 ==================
