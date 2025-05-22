@@ -18,7 +18,7 @@ COLOR_CINZA = '#c0c0c0'
 COLOR_GRAF_1 = '#00471611'
 COLOR_GRAF_2 = '#006A5444'
 COLOR_GRAF_3 = '#C0C0C0'
-COLOR_GRAF_4 = '#0A2601'
+COLOR_GRAF_4 = '#7dbbf1'  # azul claro fornecido
 COLOR_GRAF_5 = '#3FC6A0'
 
 # Função de conexão
@@ -94,10 +94,10 @@ else:
             text-align: center;
         }}
         .card b {{
-            font-size: 32px;
+            font-size: 36px;
         }}
         .card-title {{
-            font-size: 16px;
+            font-size: 18px;
             display: block;
         }}
         .meta {{ background-color: {COLOR_META}; }}
@@ -107,12 +107,10 @@ else:
         </style>
     """, unsafe_allow_html=True)
 
-    col1, col2, col3, col4, col5 = st.columns(5)
+    col1, col2, col3 = st.columns(3)
     col1.markdown(f'<div class="card meta"><span class="card-title">Meta Mensal</span><b>R$ {META_MENSAL:,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
     col2.markdown(f'<div class="card realizado"><span class="card-title">Faturado no Mês</span><b>R$ {realizado:,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
-    col3.markdown(f'<div class="card pendente"><span class="card-title">Pendente</span><b>R$ {pendente:,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
-    col4.markdown(f'<div class="card info"><span class="card-title">Faturado no Dia</span><b>R$ {valor_dia:,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
-    col5.markdown(f'<div class="card info"><span class="card-title">Faturado na Semana</span><b>R$ {valor_semana:,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
+    col3.markdown(f'<div class="card pendente"><span class="card-title">Falta para Meta</span><b>R$ {pendente:,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
 
     # ================== LINHA 2 ==================
     fig_termo = go.Figure()
@@ -124,7 +122,7 @@ else:
         marker=dict(color=COLOR_REALIZADO),
         text=[f'Realizado\nR$ {realizado:,.0f}\n{perc_realizado:.1f}%'.replace(",", "X").replace(".", ",").replace("X", ".")],
         textposition='inside',
-        textfont=dict(size=16)
+        textfont=dict(size=18)
     ))
     fig_termo.add_trace(go.Bar(
         y=['Meta'],
@@ -132,9 +130,9 @@ else:
         name='',
         orientation='h',
         marker=dict(color=COLOR_PENDENTE),
-        text=[f'Pendente\nR$ {pendente:,.0f}\n{100 - perc_realizado:.1f}%'.replace(",", "X").replace(".", ",").replace("X", ".")],
+        text=[f'Falta\nR$ {pendente:,.0f}\n{100 - perc_realizado:.1f}%'.replace(",", "X").replace(".", ",").replace("X", ".")],
         textposition='inside',
-        textfont=dict(size=16)
+        textfont=dict(size=18)
     ))
     fig_termo.update_layout(barmode='stack', height=80, margin=dict(t=10, b=10), showlegend=False)
     st.plotly_chart(fig_termo, use_container_width=True)
@@ -150,9 +148,13 @@ else:
         ultimos_view['Total Produto'] = ultimos_view['Total Produto'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
         st.dataframe(ultimos_view, height=480)
 
+        colx, coly = st.columns(2)
+        colx.markdown(f'<div class="card info"><span class="card-title">Faturado no Dia</span><b>R$ {valor_dia:,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
+        coly.markdown(f'<div class="card info"><span class="card-title">Faturado na Semana</span><b>R$ {valor_semana:,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
+
     with col2:
-        st.markdown("### Ranking de Vendedores")
-        ranking = df_mes.groupby('Vendedor')['Total Produto'].sum().sort_values(ascending=False).head(10).reset_index()
+        st.markdown("### Ranking do Dia")
+        ranking = df_dia.groupby('Vendedor')['Total Produto'].sum().sort_values(ascending=False).head(10).reset_index()
         fig_ranking = px.bar(
             ranking,
             y='Vendedor',
@@ -161,10 +163,10 @@ else:
             color_discrete_sequence=[COLOR_GRAF_4],
             text=ranking['Total Produto'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
         )
-        fig_ranking.update_traces(textposition='inside')
+        fig_ranking.update_traces(textposition='inside', textfont=dict(size=16))
         fig_ranking.update_layout(
             height=525,
             margin=dict(t=10),
-            yaxis=dict(autorange="reversed")
+            yaxis=dict(autorange="reversed", tickfont=dict(size=16))
         )
         st.plotly_chart(fig_ranking, use_container_width=True)
