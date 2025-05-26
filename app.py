@@ -8,7 +8,7 @@ import plotly.graph_objects as go
 
 st.set_page_config(page_title="Dashboard de Faturamento", layout="wide")
   
-META_MENSAL = 6_493_506
+META_MENSAL = 5_800_000
 
 # Paleta de cores
 COLOR_REALIZADO = '#2ca02c'  # verde
