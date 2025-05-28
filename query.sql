@@ -1,394 +1,167 @@
--- NOTAS FISCAIS DE SAÍDA --
-SELECT
-	'BASEXYZ' 'Base SX'
-	,NF.BPLName 'Filial'
- 	,'NF SAIDA' 'Tipo Doc'
-	,Case NF.U_indPres
-		when 1 then 'SIM'
-		WHEN 0 THEN 'NAO'
-	END 'Contribuinte'
-	,NF.DocNum 'Doc SAP'
-	,NF.Serial 'Nota Fiscal'
-	,NF.DocDate 'Data Emissão'
-	,NF.CardCode 'Codigo Cliente'
-	,NF.CardName 'Cliente'
-	,NF.U_SKILL_IndIEDest 'Contribuinte'
-	,NF1.ItemCode 'Item'
-	,NF1.Dscription 'Descricao do Item'
-	,GP.ItmsGrpNam 'Grupo Produto'
-	,ISNULL(NF1.unitMsr, '') 'Unidade'
-	,NF1.Quantity 'Quantidade'
-	,NF1.Price 'Unitário.'
-	,NF1.LineTotal 'Total Produto'
-	,NF1.CFOPCode 'CFOP'
-	,CASE LEFT(NF1.CFOPCode,1)
-		WHEN 1 THEN 'Entrada'
-		WHEN 2 THEN 'Entrada'
-		WHEN 3 THEN 'Entrada'
-		WHEN 5 THEN 'Saida'
-		WHEN 6 THEN 'Saida'
-		WHEN 7 THEN 'Saida'
-	END 'Tipo'
-	,CASE right(NF1.CFOPCode,3) 
-		WHEN '101' THEN 'SIM'
-		WHEN '102' THEN 'SIM'
-		WHEN '103' THEN 'SIM'
-		WHEN '107' THEN 'SIM'
-		WHEN '108' THEN 'SIM'
-		WHEN '109' THEN 'SIM'
-		WHEN '118' THEN 'SIM'
-		WHEN '120' THEN 'SIM'
-		WHEN '401' THEN 'SIM'
-		WHEN '403' THEN 'SIM'
-		WHEN '404' THEN 'SIM'
-		WHEN '405' THEN 'SIM'
-		WHEN '551' THEN 'SIM'
-		WHEN '922' THEN 'SIM'
-		WHEN '933' THEN 'SIM'
-		ELSE 'NAO' 
-	END 'Receita'
-	,ISNULL(NF1.StockPrice * NF1.Quantity, 0) 'CMV'
+import streamlit as st
+import pandas as pd
+import pyodbc
+from datetime import datetime, timedelta
+import plotly.graph_objects as go
 
+st.set_page_config(page_title="Dashboard de Faturamento e Pedidos", layout="wide")
 
-	--Aliquotas dos impostos
-	,(SELECT ISNULL(SUM(NF4.TaxRate), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType = 16 AND NF4.RelateType NOT IN (11)) 'Aliq. IPI'
-	,(SELECT ISNULL(SUM(NF4.TaxRate), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType = 13 AND NF4.RelateType NOT IN (11)) 'Aliq. ICMS-ST'
-	,(SELECT ISNULL(SUM(NF4.TaxRate), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (10, 11) AND NF4.RelateType NOT IN (11)) 'Aliq. ICMS'
-	,(SELECT ISNULL(SUM(NF4.TaxRate), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (19, 20) AND NF4.RelateType NOT IN (11)) 'Aliq. PIS'
-	,(SELECT ISNULL(SUM(NF4.TaxRate), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (21, 22) AND NF4.RelateType NOT IN (11)) 'Aliq. CONFIS'
-	,(SELECT ISNULL(SUM(NF4.TaxRate), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (32) AND NF4.RelateType NOT IN (11)) 'Aliq. DIFAL'
-	,(SELECT ISNULL(SUM(NF4.TaxRate), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (25, 29, 30, 34) AND NF4.RelateType NOT IN (11)) 'Aliq. FCP'
-	,(SELECT ISNULL(SUM(NF4.TaxRate), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (24) AND NF4.RelateType NOT IN (11)) 'Aliq. ISS'
+META_MENSAL = 5_800_000
 
-	--Valor dos impostos
-	,(SELECT ISNULL(SUM(NF4.TaxSum), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType = 16 AND NF4.RelateType NOT IN (11)) 'Valor IPI'
-	,(SELECT ISNULL(SUM(NF4.TaxSum), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (10, 11) AND NF4.RelateType NOT IN (11)) 'Valor ICMS'
-	,(SELECT ISNULL(SUM(NF4.TaxSum), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType = 13 AND NF4.RelateType NOT IN (11)) 'Valor ICMS-ST'
-	,(SELECT ISNULL(SUM(NF4.TaxSum), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (19, 20) AND NF4.RelateType NOT IN (11)) 'Valor PIS'
-	,(SELECT ISNULL(SUM(NF4.TaxSum), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (21, 22) AND NF4.RelateType NOT IN (11)) 'Valor CONFIS'
-	,(SELECT ISNULL(SUM(NF4.TaxSum), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (32) AND NF4.RelateType NOT IN (11)) 'Valor DIFAL'
-	,(SELECT ISNULL(SUM(NF4.TaxSum), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (25, 29, 30, 34) AND NF4.RelateType NOT IN (11)) 'Valor FCP'
-	,(SELECT ISNULL(SUM(NF4.TaxSum), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (24) AND NF4.RelateType NOT IN (11)) 'Valor ISS'
+COLOR_REALIZADO = '#2ca02c'  # verde
+COLOR_PROMETIDO = '#ff7f0e'  # laranja
+COLOR_RESTANTE = '#d62728'   # vermelho
+COLOR_META = '#1f77b4'       # azul
+COLOR_INFO = '#6c757d'
 
-	,NF1.AcctCode 'Conta Contábil'
-	,ISNULL(RP.AgentName, '') 'Representante'
-	,CASE VD.SlpCode
-		WHEN '-1' THEN ''
-		ELSE ISNULL(VD.SlpName, '') 
-	 END 'Vendedor'
-	,NF12.CityS 'Cidade'
-	,NF12.StateS 'UF'
+# Função para ler dados do faturamento
+def get_faturamento_data():
+    try:
+        conn_str = (
+            "DRIVER={ODBC Driver 17 for SQL Server};"
+            "SERVER=sx.gruposps.com.br,14382;"
+            "DATABASE=SBO_SX2022;"
+            "UID=Sx;"
+            "PWD=Sx4dm1n@1234;"
+            "TrustServerCertificate=yes;"
+        )
+        with open('query.sql', 'r', encoding='utf-8') as f:
+            query = f.read()
+        conn = pyodbc.connect(conn_str)
+        df = pd.read_sql(query, conn)
+        conn.close()
+        return df
+    except Exception as e:
+        st.error(f"Erro ao carregar faturamento: {e}")
+        return pd.DataFrame()
 
+# Função para ler dados dos pedidos
+def get_pedidos_data():
+    try:
+        conn_str = (
+            "DRIVER={ODBC Driver 17 for SQL Server};"
+            "SERVER=sx.gruposps.com.br,14382;"
+            "DATABASE=SBO_SX2022;"
+            "UID=Sx;"
+            "PWD=Sx4dm1n@1234;"
+            "TrustServerCertificate=yes;"
+        )
+        with open('pedidos.sql', 'r', encoding='utf-8') as f:
+            query = f.read()
+        conn = pyodbc.connect(conn_str)
+        df = pd.read_sql(query, conn)
+        conn.close()
+        return df
+    except Exception as e:
+        st.error(f"Erro ao carregar pedidos: {e}")
+        return pd.DataFrame()
 
+# Carregar dados
+df_fat = get_faturamento_data()
+df_ped = get_pedidos_data()
 
-FROM
-	OINV NF
-	INNER JOIN INV1 NF1 ON NF.DocEntry = NF1.DocEntry
-	INNER JOIN INV12 NF12 ON NF.DocEntry = NF12.DocEntry
-	INNER JOIN OITM IT ON NF1.ItemCode = IT.ItemCode
-	INNER JOIN OITB GP ON IT.ItmsGrpCod = GP.ItmsGrpCod
-	LEFT JOIN OAGP RP ON NF.AgentCode = RP.AgentCode
-	LEFT JOIN OSLP VD ON NF.SlpCode = VD.SlpCode
+if df_fat.empty or df_ped.empty:
+    st.warning("Dados incompletos carregados.")
+else:
+    # Detectar coluna de data no faturamento
+    if 'Data Emissao' in df_fat.columns:
+        df_fat['Data Emissao'] = pd.to_datetime(df_fat['Data Emissao'])
+        data_col_fat = 'Data Emissao'
+    elif 'Data Emissão' in df_fat.columns:
+        df_fat['Data Emissão'] = pd.to_datetime(df_fat['Data Emissão'])
+        data_col_fat = 'Data Emissão'
+    else:
+        st.warning("Coluna de data não encontrada no faturamento.")
+        data_col_fat = None
 
-WHERE
-	NF.CANCELED = 'N'
-	--AND NF.NumAtCard = '4500553999'
-	--AND NF.DocEntry = 3084
-	--AND NF1.TargetType <> '14'
+    # Detectar coluna de data nos pedidos
+    if 'Data Emissao' in df_ped.columns:
+        df_ped['Data Emissao'] = pd.to_datetime(df_ped['Data Emissao'])
+        data_col_ped = 'Data Emissao'
+    elif 'Data Emissão' in df_ped.columns:
+        df_ped['Data Emissão'] = pd.to_datetime(df_ped['Data Emissão'])
+        data_col_ped = 'Data Emissão'
+    else:
+        st.warning("Coluna de data não encontrada nos pedidos.")
+        data_col_ped = None
 
+    if data_col_fat and data_col_ped:
+        hoje = datetime.today()
+        mes_atual = hoje.month
+        ano_atual = hoje.year
 
-UNION ALL
+        # Filtrar mês atual
+        df_fat_mes = df_fat[(df_fat[data_col_fat].dt.month == mes_atual) & (df_fat[data_col_fat].dt.year == ano_atual)]
+        df_ped_mes = df_ped[(df_ped[data_col_ped].dt.month == mes_atual) & (df_ped[data_col_ped].dt.year == ano_atual)]
 
--- ENTREGA --
-SELECT
-	'BASEXYZ' 'Base SX'
-	,NF.BPLName 'Filial'
-	,'ENTREGA' 'Tipo Doc'
-	,Case NF.U_indPres
-		when 1 then 'SIM'
-		WHEN 0 THEN 'NAO'
-	END 'Contribuinte'
-	,NF.DocNum 'Nº Doc SAP'
-	,NF.Serial 'Nº NF'
-	,NF.DocDate 'Data Emissão'
-	,NF.CardCode 'Cod. Cliente'
-	,NF.CardName 'Cliente'
-	,NF.U_SKILL_IndIEDest 'Contribuinte'
-	,NF1.ItemCode 'Item'
-	,NF1.Dscription 'Descrição do Item'
-	,GP.ItmsGrpNam 'Grupo Produto'
-	,ISNULL(NF1.unitMsr, '') 'UM'
-	,NF1.Quantity 'Quantidade'
-	,NF1.Price 'Preço Unit.'
-	,NF1.LineTotal 'Total Produto'
-	,NF1.CFOPCode 'CFOP'
-	,CASE LEFT(NF1.CFOPCode,1)
-		WHEN 1 THEN 'Entrada'
-		WHEN 2 THEN 'Entrada'
-		WHEN 3 THEN 'Entrada'
-		WHEN 5 THEN 'Saida'
-		WHEN 6 THEN 'Saida'
-		WHEN 7 THEN 'Saida'
-	END 'Tipo'
-	,CASE right(NF1.CFOPCode,3) 
-		WHEN '101' THEN 'SIM'
-		WHEN '102' THEN 'SIM'
-		WHEN '103' THEN 'SIM'
-		WHEN '107' THEN 'SIM'
-		WHEN '108' THEN 'SIM'
-		WHEN '109' THEN 'SIM'
-		WHEN '118' THEN 'SIM'
-		WHEN '120' THEN 'SIM'
-		WHEN '401' THEN 'SIM'
-		WHEN '403' THEN 'SIM'
-		WHEN '404' THEN 'SIM'
-		WHEN '405' THEN 'SIM'
-		WHEN '551' THEN 'SIM'
-		WHEN '922' THEN 'SIM'
-		WHEN '933' THEN 'SIM'
-		ELSE 'NAO' 
-	END 'Receita'
-	,ISNULL(NF1.StockPrice * NF1.Quantity, 0) 'CMV'
+        realizado = df_fat_mes['Total Produto'].sum()
+        prometido = df_ped_mes['Valor Receita Bruta Pedido'].sum()
+        restante = max(META_MENSAL - realizado - prometido, 0)
 
-	
-	--Aliquotas dos impostos
-	,(SELECT ISNULL(SUM(NF4.TaxRate), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType = 16 AND NF4.RelateType NOT IN (11)) 'Aliq. IPI'
-	,(SELECT ISNULL(SUM(NF4.TaxRate), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType = 13 AND NF4.RelateType NOT IN (11)) 'Aliq. ICMS-ST'
-	,(SELECT ISNULL(SUM(NF4.TaxRate), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (10, 11) AND NF4.RelateType NOT IN (11)) 'Aliq. ICMS'
-	,(SELECT ISNULL(SUM(NF4.TaxRate), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (19, 20) AND NF4.RelateType NOT IN (11)) 'Aliq. PIS'
-	,(SELECT ISNULL(SUM(NF4.TaxRate), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (21, 22) AND NF4.RelateType NOT IN (11)) 'Aliq. CONFIS'
-	,(SELECT ISNULL(SUM(NF4.TaxRate), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (32) AND NF4.RelateType NOT IN (11)) 'Aliq. DIFAL'
-	,(SELECT ISNULL(SUM(NF4.TaxRate), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (25, 29, 30, 34) AND NF4.RelateType NOT IN (11)) 'Aliq. FCP'
-	,(SELECT ISNULL(SUM(NF4.TaxRate), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (24) AND NF4.RelateType NOT IN (11)) 'Aliq. ISS'
+        perc_realizado = min(realizado / META_MENSAL * 100, 100)
+        perc_prometido = min(prometido / META_MENSAL * 100, 100)
+        perc_restante = max(100 - perc_realizado - perc_prometido, 0)
 
-	--Valor dos impostos
-	,(SELECT ISNULL(SUM(NF4.TaxSum), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType = 16 AND NF4.RelateType NOT IN (11)) 'Valor IPI'
-	,(SELECT ISNULL(SUM(NF4.TaxSum), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (10, 11) AND NF4.RelateType NOT IN (11)) 'Valor ICMS'
-	,(SELECT ISNULL(SUM(NF4.TaxSum), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType = 13 AND NF4.RelateType NOT IN (11)) 'Valor ICMS-ST'
-	,(SELECT ISNULL(SUM(NF4.TaxSum), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (19, 20) AND NF4.RelateType NOT IN (11)) 'Valor PIS'
-	,(SELECT ISNULL(SUM(NF4.TaxSum), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (21, 22) AND NF4.RelateType NOT IN (11)) 'Valor CONFIS'
-	,(SELECT ISNULL(SUM(NF4.TaxSum), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (32) AND NF4.RelateType NOT IN (11)) 'Valor DIFAL'
-	,(SELECT ISNULL(SUM(NF4.TaxSum), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (25, 29, 30, 34) AND NF4.RelateType NOT IN (11)) 'Valor FCP'
-	,(SELECT ISNULL(SUM(NF4.TaxSum), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (24) AND NF4.RelateType NOT IN (11)) 'Valor ISS'
+        # Indicadores principais
+        st.markdown(f"""
+            <style>
+            .card {{
+                border-radius: 10px;
+                padding: 12px;
+                margin-bottom: 10px;
+                color: white;
+                text-align: center;
+            }}
+            .card b {{ font-size: 32px; }}
+            .card-title {{ font-size: 16px; display: block; }}
+            .meta {{ background-color: {COLOR_META}; }}
+            .prometido {{ background-color: {COLOR_PROMETIDO}; }}
+            .realizado {{ background-color: {COLOR_REALIZADO}; }}
+            .restante {{ background-color: {COLOR_RESTANTE}; }}
+            .info {{ background-color: {COLOR_INFO}; }}
+            </style>
+        """, unsafe_allow_html=True)
 
-	,NF1.AcctCode 'Conta Contábil'
-	,ISNULL(RP.AgentName, '') 'Representante'
-	,CASE VD.SlpCode
-		WHEN '-1' THEN ''
-		ELSE ISNULL(VD.SlpName, '') 
-	 END 'Vendedor'
-	,NF12.CityS 'Cidade'
-	,NF12.StateS 'UF'
+        col1, col2, col3, col4 = st.columns(4)
+        col1.markdown(f'<div class="card meta"><span class="card-title">Meta Mensal</span><b>R$ {META_MENSAL:,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
+        col2.markdown(f'<div class="card prometido"><span class="card-title">Prometido</span><b>R$ {prometido:,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
+        col3.markdown(f'<div class="card realizado"><span class="card-title">Faturado</span><b>R$ {realizado:,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
+        col4.markdown(f'<div class="card restante"><span class="card-title">Restante</span><b>R$ {restante:,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
 
+        # Gráfico termômetro
+        fig_termo = go.Figure()
+        fig_termo.add_trace(go.Bar(y=['Meta'], x=[realizado], orientation='h', marker=dict(color=COLOR_REALIZADO), text=[f'{perc_realizado:.1f}%'], textposition='auto'))
+        fig_termo.add_trace(go.Bar(y=['Meta'], x=[prometido], orientation='h', marker=dict(color=COLOR_PROMETIDO), text=[f'{perc_prometido:.1f}%'], textposition='auto'))
+        fig_termo.add_trace(go.Bar(y=['Meta'], x=[restante], orientation='h', marker=dict(color=COLOR_RESTANTE), text=[f'{perc_restante:.1f}%'], textposition='auto'))
+        fig_termo.update_layout(barmode='stack', height=80, margin=dict(t=10, b=10), showlegend=False)
+        st.plotly_chart(fig_termo, use_container_width=True)
 
-FROM
-	ODLN NF
-	INNER JOIN DLN1 NF1 ON NF.DocEntry = NF1.DocEntry
-	INNER JOIN DLN12 NF12 ON NF.DocEntry = NF12.DocEntry
-	INNER JOIN OITM IT ON NF1.ItemCode = IT.ItemCode
-	INNER JOIN OITB GP ON IT.ItmsGrpCod = GP.ItmsGrpCod
-	LEFT JOIN OAGP RP ON NF.AgentCode = RP.AgentCode
-	LEFT JOIN OSLP VD ON NF.SlpCode = VD.SlpCode
+        # Últimos faturamentos
+        st.markdown("### Últimos Faturamentos")
+        ult_fat = df_fat_mes.sort_values(by=data_col_fat, ascending=False)
+        ult_fat[data_col_fat] = ult_fat[data_col_fat].dt.strftime('%d/%m/%Y')
+        ult_fat_view = ult_fat[[data_col_fat, 'Cliente', 'Vendedor', 'Total Produto']].head(10)
+        ult_fat_view['Total Produto'] = ult_fat_view['Total Produto'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        st.dataframe(ult_fat_view, height=300)
 
-WHERE
-	NF.CANCELED = 'N'
-	--AND NF.NumAtCard = '4500553999'
-	--AND NF.DocEntry = 3084
-	--AND NF1.TargetType <> '14'
+        # Últimos pedidos
+        st.markdown("### Últimos Pedidos (Prometidos)")
+        ult_ped = df_ped_mes.sort_values(by=data_col_ped, ascending=False)
+        ult_ped[data_col_ped] = ult_ped[data_col_ped].dt.strftime('%d/%m/%Y')
+        ult_ped_view = ult_ped[[data_col_ped, 'Cliente', 'Vendedor', 'Valor Receita Bruta Pedido']].head(10)
+        ult_ped_view['Valor Receita Bruta Pedido'] = ult_ped_view['Valor Receita Bruta Pedido'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        st.dataframe(ult_ped_view, height=300)
 
+        # Indicadores rápidos
+        df_fat_dia = df_fat[df_fat[data_col_fat].dt.date == hoje.date()]
+        df_fat_semana = df_fat[df_fat[data_col_fat].dt.isocalendar().week == hoje.isocalendar().week]
+        df_ped_dia = df_ped[df_ped[data_col_ped].dt.date == hoje.date()]
+        df_ped_semana = df_ped[df_ped[data_col_ped].dt.isocalendar().week == hoje.isocalendar().week]
 
-UNION ALL
+        colx, coly = st.columns(2)
+        colx.markdown(f'<div class="card info"><span class="card-title">Faturado Hoje</span><b>R$ {df_fat_dia["Total Produto"].sum():,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
+        coly.markdown(f'<div class="card info"><span class="card-title">Faturado na Semana</span><b>R$ {df_fat_semana["Total Produto"].sum():,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
 
--- DEV. NOTAS FISCAIS DE SAÍDA --
-SELECT
-	'BASEXYZ' 'Base SX'
-	,NF.BPLName 'Filial'
-	,'DV NF SAIDA' 'Tipo Doc'
-	,Case NF.U_indPres
-		when 1 then 'SIM'
-		WHEN 0 THEN 'NAO'
-	END 'Contribuinte'
-	,NF.DocNum 'Nº Doc SAP'
-	,NF.Serial 'Nº NF'
-	,NF.DocDate 'Data Emissão'
-	,NF.CardCode 'Cod. Cliente'
-	,NF.CardName 'Cliente'
-	,NF.U_SKILL_IndIEDest 'Contribuinte'
-	,NF1.ItemCode 'Item'
-	,NF1.Dscription 'Descrição do Item'
-	,GP.ItmsGrpNam 'Grupo Produto'
-	,ISNULL(NF1.unitMsr, '') 'UM'
-	,-1 * NF1.Quantity 'Quantidade'
-	,-1 * NF1.Price 'Preço Unit.'
-	,-1 * NF1.LineTotal 'Total Produto'
-	,NF1.CFOPCode 'CFOP'
-	,CASE LEFT(NF1.CFOPCode,1)
-		WHEN 1 THEN 'Entrada'
-		WHEN 2 THEN 'Entrada'
-		WHEN 3 THEN 'Entrada'
-		WHEN 5 THEN 'Saida'
-		WHEN 6 THEN 'Saida'
-		WHEN 7 THEN 'Saida'
-	END 'Tipo'
-	,CASE right(NF1.CFOPCode,3) 
-		WHEN '101' THEN 'SIM'
-		WHEN '102' THEN 'SIM'
-		WHEN '103' THEN 'SIM'
-		WHEN '107' THEN 'SIM'
-		WHEN '108' THEN 'SIM'
-		WHEN '109' THEN 'SIM'
-		WHEN '118' THEN 'SIM'
-		WHEN '120' THEN 'SIM'
-		WHEN '401' THEN 'SIM'
-		WHEN '403' THEN 'SIM'
-		WHEN '404' THEN 'SIM'
-		WHEN '405' THEN 'SIM'
-		WHEN '551' THEN 'SIM'
-		WHEN '922' THEN 'SIM'
-		WHEN '933' THEN 'SIM'
-		ELSE 'NAO' 
-	END 'Receita'
-	,-1 * ISNULL(NF1.StockPrice * NF1.Quantity, 0) 'CMV'
-	
-	--Aliquotas dos impostos
-	,(SELECT ISNULL(SUM(NF4.TaxRate), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType = 16 AND NF4.RelateType NOT IN (11)) 'Aliq. IPI'
-	,(SELECT ISNULL(SUM(NF4.TaxRate), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType = 13 AND NF4.RelateType NOT IN (11)) 'Aliq. ICMS-ST'
-	,(SELECT ISNULL(SUM(NF4.TaxRate), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (10, 11) AND NF4.RelateType NOT IN (11)) 'Aliq. ICMS'
-	,(SELECT ISNULL(SUM(NF4.TaxRate), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (19, 20) AND NF4.RelateType NOT IN (11)) 'Aliq. PIS'
-	,(SELECT ISNULL(SUM(NF4.TaxRate), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (21, 22) AND NF4.RelateType NOT IN (11)) 'Aliq. CONFIS'
-	,(SELECT ISNULL(SUM(NF4.TaxRate), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (32) AND NF4.RelateType NOT IN (11)) 'Aliq. DIFAL'
-	,(SELECT ISNULL(SUM(NF4.TaxRate), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (25, 29, 30, 34) AND NF4.RelateType NOT IN (11)) 'Aliq. FCP'
-	,(SELECT ISNULL(SUM(NF4.TaxRate), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (24) AND NF4.RelateType NOT IN (11)) 'Aliq. ISS'
-
-	--Valor dos impostos
-	,(SELECT ISNULL(SUM(NF4.TaxSum), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType = 16 AND NF4.RelateType NOT IN (11)) 'Valor IPI'
-	,(SELECT ISNULL(SUM(NF4.TaxSum), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (10, 11) AND NF4.RelateType NOT IN (11)) 'Valor ICMS'
-	,(SELECT ISNULL(SUM(NF4.TaxSum), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType = 13 AND NF4.RelateType NOT IN (11)) 'Valor ICMS-ST'
-	,(SELECT ISNULL(SUM(NF4.TaxSum), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (19, 20) AND NF4.RelateType NOT IN (11)) 'Valor PIS'
-	,(SELECT ISNULL(SUM(NF4.TaxSum), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (21, 22) AND NF4.RelateType NOT IN (11)) 'Valor CONFIS'
-	,(SELECT ISNULL(SUM(NF4.TaxSum), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (32) AND NF4.RelateType NOT IN (11)) 'Valor DIFAL'
-	,(SELECT ISNULL(SUM(NF4.TaxSum), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (25, 29, 30, 34) AND NF4.RelateType NOT IN (11)) 'Valor FCP'
-	,(SELECT ISNULL(SUM(NF4.TaxSum), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (24) AND NF4.RelateType NOT IN (11)) 'Valor ISS'
-
-	,NF1.AcctCode 'Conta Contábil'
-	,ISNULL(RP.AgentName, '') 'Representante'
-	,CASE VD.SlpCode
-		WHEN '-1' THEN ''
-		ELSE ISNULL(VD.SlpName, '') 
-	 END 'Vendedor'
-	,NF12.CityS 'Cidade'
-	,NF12.StateS 'UF'
-
-
-FROM
-	ORIN NF
-	INNER JOIN RIN1 NF1 ON NF.DocEntry = NF1.DocEntry
-	INNER JOIN RIN12 NF12 ON NF.DocEntry = NF12.DocEntry
-	INNER JOIN OITM IT ON NF1.ItemCode = IT.ItemCode
-	INNER JOIN OITB GP ON IT.ItmsGrpCod = GP.ItmsGrpCod
-	LEFT JOIN OAGP RP ON NF.AgentCode = RP.AgentCode
-	LEFT JOIN OSLP VD ON NF.SlpCode = VD.SlpCode
-
-WHERE
-	NF.CANCELED = 'N'
-	--AND NF.NumAtCard = '4500553999'
-	--AND NF.DocEntry = 3084
-	AND NF1.BaseType = '13'
-
-UNION ALL
-
--- DEVOLUÇÃO --
-SELECT
-	'BASEXYZ' 'Base SX'
-	,NF.BPLName 'Filial'
-	,'DEVOLUCAO' 'Tipo Doc'
-	,Case NF.U_indPres
-		when 1 then 'SIM'
-		WHEN 0 THEN 'NAO'
-	END 'Contribuinte'
-	,NF.DocNum 'Nº Doc SAP'
-	,NF.Serial 'Nº NF'
-	,NF.DocDate 'Data Emissão'
-	,NF.CardCode 'Cod. Cliente'
-	,NF.CardName 'Cliente'
-	,NF.U_SKILL_IndIEDest 'Contribuinte'
-	,NF1.ItemCode 'Item'
-	,NF1.Dscription 'Descrição do Item'
-	,GP.ItmsGrpNam 'Grupo Produto'
-	,ISNULL(NF1.unitMsr, '') 'UM'
-	,-1 * NF1.Quantity 'Quantidade'
-	,-1 * NF1.Price 'Preço Unit.'
-	,-1 * NF1.LineTotal 'Total Produto'
-	,NF1.CFOPCode 'CFOP'
-	,CASE LEFT(NF1.CFOPCode,1)
-		WHEN 1 THEN 'Entrada'
-		WHEN 2 THEN 'Entrada'
-		WHEN 3 THEN 'Entrada'
-		WHEN 5 THEN 'Saida'
-		WHEN 6 THEN 'Saida'
-		WHEN 7 THEN 'Saida'
-	END 'Tipo'
-	,CASE right(NF1.CFOPCode,3) 
-		WHEN '101' THEN 'SIM'
-		WHEN '102' THEN 'SIM'
-		WHEN '103' THEN 'SIM'
-		WHEN '107' THEN 'SIM'
-		WHEN '108' THEN 'SIM'
-		WHEN '109' THEN 'SIM'
-		WHEN '118' THEN 'SIM'
-		WHEN '120' THEN 'SIM'
-		WHEN '401' THEN 'SIM'
-		WHEN '403' THEN 'SIM'
-		WHEN '404' THEN 'SIM'
-		WHEN '405' THEN 'SIM'
-		WHEN '551' THEN 'SIM'
-		WHEN '922' THEN 'SIM'
-		WHEN '933' THEN 'SIM'
-		ELSE 'NAO' 
-	END 'Receita'
-	,-1 * ISNULL(NF1.StockPrice * NF1.Quantity, 0) 'CMV'
-
-	--Aliquotas dos impostos
-	,(SELECT ISNULL(SUM(NF4.TaxRate), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType = 16 AND NF4.RelateType NOT IN (11)) 'Aliq. IPI'
-	,(SELECT ISNULL(SUM(NF4.TaxRate), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType = 13 AND NF4.RelateType NOT IN (11)) 'Aliq. ICMS-ST'
-	,(SELECT ISNULL(SUM(NF4.TaxRate), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (10, 11) AND NF4.RelateType NOT IN (11)) 'Aliq. ICMS'
-	,(SELECT ISNULL(SUM(NF4.TaxRate), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (19, 20) AND NF4.RelateType NOT IN (11)) 'Aliq. PIS'
-	,(SELECT ISNULL(SUM(NF4.TaxRate), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (21, 22) AND NF4.RelateType NOT IN (11)) 'Aliq. CONFIS'
-	,(SELECT ISNULL(SUM(NF4.TaxRate), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (32) AND NF4.RelateType NOT IN (11)) 'Aliq. DIFAL'
-	,(SELECT ISNULL(SUM(NF4.TaxRate), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (25, 29, 30, 34) AND NF4.RelateType NOT IN (11)) 'Aliq. FCP'
-	,(SELECT ISNULL(SUM(NF4.TaxRate), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (24) AND NF4.RelateType NOT IN (11)) 'Aliq. ISS'
-
-	--Valores dos impostos
-	,(SELECT ISNULL(SUM(NF4.TaxSum), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType = 16 AND NF4.RelateType NOT IN (11)) 'Valor IPI'
-	,(SELECT ISNULL(SUM(NF4.TaxSum), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (10, 11) AND NF4.RelateType NOT IN (11)) 'Valor ICMS'
-	,(SELECT ISNULL(SUM(NF4.TaxSum), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType = 13 AND NF4.RelateType NOT IN (11)) 'Valor ICMS-ST'
-	,(SELECT ISNULL(SUM(NF4.TaxSum), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (19, 20) AND NF4.RelateType NOT IN (11)) 'Valor PIS'
-	,(SELECT ISNULL(SUM(NF4.TaxSum), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (21, 22) AND NF4.RelateType NOT IN (11)) 'Valor CONFIS'
-	,(SELECT ISNULL(SUM(NF4.TaxSum), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (32) AND NF4.RelateType NOT IN (11)) 'Valor DIFAL'
-	,(SELECT ISNULL(SUM(NF4.TaxSum), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (25, 29, 30, 34) AND NF4.RelateType NOT IN (11)) 'Valor FCP'
-	,(SELECT ISNULL(SUM(NF4.TaxSum), 0) FROM INV4 NF4 WHERE NF4.DocEntry = NF1.DocEntry AND NF4.LineNum = NF1.LineNum AND NF4.staType IN (24) AND NF4.RelateType NOT IN (11)) 'Valor ISS'
-
-	,NF1.AcctCode 'Conta Contábil'
-	,ISNULL(RP.AgentName, '') 'Representante'
-	,CASE VD.SlpCode
-		WHEN '-1' THEN ''
-		ELSE ISNULL(VD.SlpName, '') 
-	 END 'Vendedor'
-	,NF12.CityS 'Cidade'
-	,NF12.StateS 'UF'
-
-FROM
-	ORDN NF
-	INNER JOIN RDN1 NF1 ON NF.DocEntry = NF1.DocEntry
-	INNER JOIN RDN12 NF12 ON NF.DocEntry = NF12.DocEntry
-	INNER JOIN OITM IT ON NF1.ItemCode = IT.ItemCode
-	INNER JOIN OITB GP ON IT.ItmsGrpCod = GP.ItmsGrpCod
-	LEFT JOIN OAGP RP ON NF.AgentCode = RP.AgentCode
-	LEFT JOIN OSLP VD ON NF.SlpCode = VD.SlpCode
-
-WHERE
-	NF.CANCELED = 'N'
-	--AND NF.NumAtCard = '4500553999'
-	--AND NF.DocEntry = 3084
-	AND (NF1.BaseType = '15' OR NF1.TargetType = '15')
-
+        colx, coly = st.columns(2)
+        colx.markdown(f'<div class="card info"><span class="card-title">Prometido Hoje</span><b>R$ {df_ped_dia["Valor Receita Bruta Pedido"].sum():,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
+        coly.markdown(f'<div class="card info"><span class="card-title">Prometido na Semana</span><b>R$ {df_ped_semana["Valor Receita Bruta Pedido"].sum():,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
