@@ -8,10 +8,10 @@ st.set_page_config(page_title="Dashboard de Faturamento e Pedidos", layout="wide
 
 META_MENSAL = 5_800_000
 
-COLOR_REALIZADO = '#2ca02c'  # verde
-COLOR_PROMETIDO = '#ff7f0e'  # laranja
-COLOR_RESTANTE = '#d62728'   # vermelho
-COLOR_META = '#1f77b4'       # azul
+COLOR_REALIZADO = '#2ca02c'
+COLOR_PROMETIDO = '#ff7f0e'
+COLOR_RESTANTE = '#d62728'
+COLOR_META = '#1f77b4'
 COLOR_INFO = '#6c757d'
 
 # Função para ler dados do faturamento
@@ -63,39 +63,31 @@ df_ped = get_pedidos_data()
 if df_fat.empty or df_ped.empty:
     st.warning("Dados incompletos carregados.")
 else:
-    # Detectar coluna de data no faturamento
-    if 'Data Emissao' in df_fat.columns:
-        df_fat['Data Emissao'] = pd.to_datetime(df_fat['Data Emissao'])
-        data_col_fat = 'Data Emissao'
-    elif 'Data Emissão' in df_fat.columns:
-        df_fat['Data Emissão'] = pd.to_datetime(df_fat['Data Emissão'])
-        data_col_fat = 'Data Emissão'
-    else:
-        st.warning("Coluna de data não encontrada no faturamento.")
-        data_col_fat = None
+    hoje = datetime.today()
+    mes_atual = hoje.month
+    ano_atual = hoje.year
 
-    # Detectar coluna de data nos pedidos
-    if 'Data Emissao' in df_ped.columns:
-        df_ped['Data Emissao'] = pd.to_datetime(df_ped['Data Emissao'])
-        data_col_ped = 'Data Emissao'
-    elif 'Data Emissão' in df_ped.columns:
-        df_ped['Data Emissão'] = pd.to_datetime(df_ped['Data Emissão'])
-        data_col_ped = 'Data Emissão'
-    else:
-        st.warning("Coluna de data não encontrada nos pedidos.")
-        data_col_ped = None
+    # Ajustar coluna de data para faturamento
+    fat_date_cols = [col for col in df_fat.columns if 'Data' in col]
+    ped_date_cols = [col for col in df_ped.columns if 'Data' in col]
+
+    if not fat_date_cols:
+        st.warning("Nenhuma coluna de data encontrada no faturamento.")
+    if not ped_date_cols:
+        st.warning("Nenhuma coluna de data encontrada nos pedidos.")
+
+    data_col_fat = fat_date_cols[0] if fat_date_cols else None
+    data_col_ped = ped_date_cols[0] if ped_date_cols else None
 
     if data_col_fat and data_col_ped:
-        hoje = datetime.today()
-        mes_atual = hoje.month
-        ano_atual = hoje.year
+        df_fat[data_col_fat] = pd.to_datetime(df_fat[data_col_fat])
+        df_ped[data_col_ped] = pd.to_datetime(df_ped[data_col_ped])
 
-        # Filtrar mês atual
         df_fat_mes = df_fat[(df_fat[data_col_fat].dt.month == mes_atual) & (df_fat[data_col_fat].dt.year == ano_atual)]
         df_ped_mes = df_ped[(df_ped[data_col_ped].dt.month == mes_atual) & (df_ped[data_col_ped].dt.year == ano_atual)]
 
-        realizado = df_fat_mes['Total Produto'].sum()
-        prometido = df_ped_mes['Valor Receita Bruta Pedido'].sum()
+        realizado = df_fat_mes['Total Produto'].sum() if 'Total Produto' in df_fat_mes.columns else 0
+        prometido = df_ped_mes['Valor Receita Bruta Pedido'].sum() if 'Valor Receita Bruta Pedido' in df_ped_mes.columns else 0
         restante = max(META_MENSAL - realizado - prometido, 0)
 
         perc_realizado = min(realizado / META_MENSAL * 100, 100)
@@ -138,19 +130,21 @@ else:
 
         # Últimos faturamentos
         st.markdown("### Últimos Faturamentos")
-        ult_fat = df_fat_mes.sort_values(by=data_col_fat, ascending=False)
-        ult_fat[data_col_fat] = ult_fat[data_col_fat].dt.strftime('%d/%m/%Y')
-        ult_fat_view = ult_fat[[data_col_fat, 'Cliente', 'Vendedor', 'Total Produto']].head(10)
-        ult_fat_view['Total Produto'] = ult_fat_view['Total Produto'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-        st.dataframe(ult_fat_view, height=300)
+        if all(col in df_fat_mes.columns for col in [data_col_fat, 'Cliente', 'Vendedor', 'Total Produto']):
+            ult_fat = df_fat_mes.sort_values(by=data_col_fat, ascending=False)
+            ult_fat[data_col_fat] = ult_fat[data_col_fat].dt.strftime('%d/%m/%Y')
+            ult_fat_view = ult_fat[[data_col_fat, 'Cliente', 'Vendedor', 'Total Produto']].head(10)
+            ult_fat_view['Total Produto'] = ult_fat_view['Total Produto'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            st.dataframe(ult_fat_view, height=300)
 
         # Últimos pedidos
         st.markdown("### Últimos Pedidos (Prometidos)")
-        ult_ped = df_ped_mes.sort_values(by=data_col_ped, ascending=False)
-        ult_ped[data_col_ped] = ult_ped[data_col_ped].dt.strftime('%d/%m/%Y')
-        ult_ped_view = ult_ped[[data_col_ped, 'Cliente', 'Vendedor', 'Valor Receita Bruta Pedido']].head(10)
-        ult_ped_view['Valor Receita Bruta Pedido'] = ult_ped_view['Valor Receita Bruta Pedido'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-        st.dataframe(ult_ped_view, height=300)
+        if all(col in df_ped_mes.columns for col in [data_col_ped, 'Cliente', 'Vendedor', 'Valor Receita Bruta Pedido']):
+            ult_ped = df_ped_mes.sort_values(by=data_col_ped, ascending=False)
+            ult_ped[data_col_ped] = ult_ped[data_col_ped].dt.strftime('%d/%m/%Y')
+            ult_ped_view = ult_ped[[data_col_ped, 'Cliente', 'Vendedor', 'Valor Receita Bruta Pedido']].head(10)
+            ult_ped_view['Valor Receita Bruta Pedido'] = ult_ped_view['Valor Receita Bruta Pedido'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            st.dataframe(ult_ped_view, height=300)
 
         # Indicadores rápidos
         df_fat_dia = df_fat[df_fat[data_col_fat].dt.date == hoje.date()]
