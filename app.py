@@ -91,7 +91,7 @@ else:
 
     data_col_fat = [col for col in df_fat.columns if 'Data' in col][0]
     data_col_cart = 'Data Entrega'
-    data_col_ped = 'Data Entrega'
+    data_col_ped = 'Data Inclusão'
 
     df_fat[data_col_fat] = pd.to_datetime(df_fat[data_col_fat])
     df_cart[data_col_cart] = pd.to_datetime(df_cart[data_col_cart])
