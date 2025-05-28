@@ -110,11 +110,11 @@ else:
 
     fig_termo = go.Figure()
     fig_termo.add_trace(go.Bar(y=['Meta'], x=[realizado], orientation='h', marker=dict(color=COLOR_REALIZADO), text=[f'{perc_realizado:.1f}%'], textposition='auto'))
-    fig_termo.add_trace(go.Bar(y=['Meta'], x=[META_MENSAL - realizado], orientation='h', marker=dict(color=COLOR_RESTANTE), text=[f'{perc_restante:.1f}%'], textposition='auto'))
+    fig_termo.add_trace(go.Bar(y=['Meta'], x=[restante], orientation='h', marker=dict(color=COLOR_RESTANTE), text=[f'{perc_restante:.1f}%'], textposition='auto'))
     fig_termo.update_layout(barmode='stack', height=80, margin=dict(t=10, b=10), showlegend=False)
     st.plotly_chart(fig_termo, use_container_width=True)
 
-    col_fat, col_ped = st.columns([1, 0.05, 1])
+    col_fat, col_ped = st.columns(2)
 
     with col_fat:
         st.markdown("### Últimos Faturamentos")
