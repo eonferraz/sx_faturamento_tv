@@ -71,7 +71,7 @@ else:
     ano_atual = hoje.year
 
     # Filtrar mês atual
-df_fat_mes = df_fat[(df_fat['Data Emissão'].dt.month == mes_atual) & (df_fat['Data Emissão'].dt.year == ano_atual)]
+    df_fat_mes = df_fat[(df_fat['Data Emissão'].dt.month == mes_atual) & (df_fat['Data Emissão'].dt.year == ano_atual)]
     df_ped_mes = df_ped[(df_ped['Data Emissão'].dt.month == mes_atual) & (df_ped['Data Emissão'].dt.year == ano_atual)]
 
     realizado = df_fat_mes['Total Produto'].sum()
