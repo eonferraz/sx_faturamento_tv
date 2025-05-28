@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import pyodbc
-from datetime import datetime, timedelta
+from datetime import datetime
 import plotly.graph_objects as go
 
 st.set_page_config(page_title="Dashboard de Faturamento e Pedidos", layout="wide")
@@ -67,94 +67,82 @@ else:
     mes_atual = hoje.month
     ano_atual = hoje.year
 
-    # Ajustar coluna de data para faturamento
-    fat_date_cols = [col for col in df_fat.columns if 'Data' in col]
-    ped_date_cols = [col for col in df_ped.columns if 'Data' in col]
+    data_col_fat = [col for col in df_fat.columns if 'Data' in col][0]
+    data_col_ped = [col for col in df_ped.columns if 'Data' in col][0]
 
-    if not fat_date_cols:
-        st.warning("Nenhuma coluna de data encontrada no faturamento.")
-    if not ped_date_cols:
-        st.warning("Nenhuma coluna de data encontrada nos pedidos.")
+    df_fat[data_col_fat] = pd.to_datetime(df_fat[data_col_fat])
+    df_ped[data_col_ped] = pd.to_datetime(df_ped[data_col_ped])
 
-    data_col_fat = fat_date_cols[0] if fat_date_cols else None
-    data_col_ped = ped_date_cols[0] if ped_date_cols else None
+    df_fat_mes = df_fat[(df_fat[data_col_fat].dt.month == mes_atual) & (df_fat[data_col_fat].dt.year == ano_atual)]
+    df_ped_mes = df_ped[(df_ped[data_col_ped].dt.month == mes_atual) & (df_ped[data_col_ped].dt.year == ano_atual)]
 
-    if data_col_fat and data_col_ped:
-        df_fat[data_col_fat] = pd.to_datetime(df_fat[data_col_fat])
-        df_ped[data_col_ped] = pd.to_datetime(df_ped[data_col_ped])
+    realizado = df_fat_mes['Total Produto'].sum()
+    prometido = df_ped_mes['Valor Receita Bruta Pedido'].sum()
+    restante = max(META_MENSAL - realizado - prometido, 0)
 
-        df_fat_mes = df_fat[(df_fat[data_col_fat].dt.month == mes_atual) & (df_fat[data_col_fat].dt.year == ano_atual)]
-        df_ped_mes = df_ped[(df_ped[data_col_ped].dt.month == mes_atual) & (df_ped[data_col_ped].dt.year == ano_atual)]
+    perc_realizado = min(realizado / META_MENSAL * 100, 100)
+    perc_prometido = min(prometido / META_MENSAL * 100, 100)
+    perc_restante = max(100 - perc_realizado - perc_prometido, 0)
 
-        realizado = df_fat_mes['Total Produto'].sum() if 'Total Produto' in df_fat_mes.columns else 0
-        prometido = df_ped_mes['Valor Receita Bruta Pedido'].sum() if 'Valor Receita Bruta Pedido' in df_ped_mes.columns else 0
-        restante = max(META_MENSAL - realizado - prometido, 0)
+    st.markdown(f"""
+        <style>
+        .card {{
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
+            color: white;
+            text-align: center;
+        }}
+        .card b {{ font-size: 32px; }}
+        .card-title {{ font-size: 16px; display: block; }}
+        .meta {{ background-color: {COLOR_META}; }}
+        .prometido {{ background-color: {COLOR_PROMETIDO}; }}
+        .realizado {{ background-color: {COLOR_REALIZADO}; }}
+        .restante {{ background-color: {COLOR_RESTANTE}; }}
+        .info {{ background-color: {COLOR_INFO}; }}
+        </style>
+    """, unsafe_allow_html=True)
 
-        perc_realizado = min(realizado / META_MENSAL * 100, 100)
-        perc_prometido = min(prometido / META_MENSAL * 100, 100)
-        perc_restante = max(100 - perc_realizado - perc_prometido, 0)
+    col1, col2, col3, col4 = st.columns(4)
+    col1.markdown(f'<div class="card meta"><span class="card-title">Meta Mensal</span><b>R$ {META_MENSAL:,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
+    col2.markdown(f'<div class="card prometido"><span class="card-title">Prometido</span><b>R$ {prometido:,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
+    col3.markdown(f'<div class="card realizado"><span class="card-title">Faturado</span><b>R$ {realizado:,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
+    col4.markdown(f'<div class="card restante"><span class="card-title">Restante</span><b>R$ {restante:,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
 
-        # Indicadores principais
-        st.markdown(f"""
-            <style>
-            .card {{
-                border-radius: 10px;
-                padding: 12px;
-                margin-bottom: 10px;
-                color: white;
-                text-align: center;
-            }}
-            .card b {{ font-size: 32px; }}
-            .card-title {{ font-size: 16px; display: block; }}
-            .meta {{ background-color: {COLOR_META}; }}
-            .prometido {{ background-color: {COLOR_PROMETIDO}; }}
-            .realizado {{ background-color: {COLOR_REALIZADO}; }}
-            .restante {{ background-color: {COLOR_RESTANTE}; }}
-            .info {{ background-color: {COLOR_INFO}; }}
-            </style>
-        """, unsafe_allow_html=True)
+    fig_termo = go.Figure()
+    fig_termo.add_trace(go.Bar(y=['Meta'], x=[realizado], orientation='h', marker=dict(color=COLOR_REALIZADO), text=[f'{perc_realizado:.1f}%'], textposition='auto'))
+    fig_termo.add_trace(go.Bar(y=['Meta'], x=[prometido], orientation='h', marker=dict(color=COLOR_PROMETIDO), text=[f'{perc_prometido:.1f}%'], textposition='auto'))
+    fig_termo.add_trace(go.Bar(y=['Meta'], x=[restante], orientation='h', marker=dict(color=COLOR_RESTANTE), text=[f'{perc_restante:.1f}%'], textposition='auto'))
+    fig_termo.update_layout(barmode='stack', height=80, margin=dict(t=10, b=10), showlegend=False)
+    st.plotly_chart(fig_termo, use_container_width=True)
 
-        col1, col2, col3, col4 = st.columns(4)
-        col1.markdown(f'<div class="card meta"><span class="card-title">Meta Mensal</span><b>R$ {META_MENSAL:,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
-        col2.markdown(f'<div class="card prometido"><span class="card-title">Prometido</span><b>R$ {prometido:,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
-        col3.markdown(f'<div class="card realizado"><span class="card-title">Faturado</span><b>R$ {realizado:,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
-        col4.markdown(f'<div class="card restante"><span class="card-title">Restante</span><b>R$ {restante:,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
+    col_fat, col_ped = st.columns(2)
 
-        # Gráfico termômetro
-        fig_termo = go.Figure()
-        fig_termo.add_trace(go.Bar(y=['Meta'], x=[realizado], orientation='h', marker=dict(color=COLOR_REALIZADO), text=[f'{perc_realizado:.1f}%'], textposition='auto'))
-        fig_termo.add_trace(go.Bar(y=['Meta'], x=[prometido], orientation='h', marker=dict(color=COLOR_PROMETIDO), text=[f'{perc_prometido:.1f}%'], textposition='auto'))
-        fig_termo.add_trace(go.Bar(y=['Meta'], x=[restante], orientation='h', marker=dict(color=COLOR_RESTANTE), text=[f'{perc_restante:.1f}%'], textposition='auto'))
-        fig_termo.update_layout(barmode='stack', height=80, margin=dict(t=10, b=10), showlegend=False)
-        st.plotly_chart(fig_termo, use_container_width=True)
-
-        # Últimos faturamentos
+    with col_fat:
         st.markdown("### Últimos Faturamentos")
-        if all(col in df_fat_mes.columns for col in [data_col_fat, 'Cliente', 'Vendedor', 'Total Produto']):
-            ult_fat = df_fat_mes.sort_values(by=data_col_fat, ascending=False)
-            ult_fat[data_col_fat] = ult_fat[data_col_fat].dt.strftime('%d/%m/%Y')
-            ult_fat_view = ult_fat[[data_col_fat, 'Cliente', 'Vendedor', 'Total Produto']].head(10)
-            ult_fat_view['Total Produto'] = ult_fat_view['Total Produto'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-            st.dataframe(ult_fat_view, height=300)
+        ult_fat = df_fat_mes.sort_values(by=data_col_fat, ascending=False)
+        ult_fat[data_col_fat] = ult_fat[data_col_fat].dt.strftime('%d/%m/%Y')
+        ult_fat_view = ult_fat[[data_col_fat, 'Cliente', 'Vendedor', 'Total Produto']].head(10)
+        ult_fat_view['Total Produto'] = ult_fat_view['Total Produto'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        st.dataframe(ult_fat_view, height=300)
 
-        # Últimos pedidos
-        st.markdown("### Últimos Pedidos (Prometidos)")
-        if all(col in df_ped_mes.columns for col in [data_col_ped, 'Cliente', 'Vendedor', 'Valor Receita Bruta Pedido']):
-            ult_ped = df_ped_mes.sort_values(by=data_col_ped, ascending=False)
-            ult_ped[data_col_ped] = ult_ped[data_col_ped].dt.strftime('%d/%m/%Y')
-            ult_ped_view = ult_ped[[data_col_ped, 'Cliente', 'Vendedor', 'Valor Receita Bruta Pedido']].head(10)
-            ult_ped_view['Valor Receita Bruta Pedido'] = ult_ped_view['Valor Receita Bruta Pedido'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-            st.dataframe(ult_ped_view, height=300)
-
-        # Indicadores rápidos
         df_fat_dia = df_fat[df_fat[data_col_fat].dt.date == hoje.date()]
         df_fat_semana = df_fat[df_fat[data_col_fat].dt.isocalendar().week == hoje.isocalendar().week]
-        df_ped_dia = df_ped[df_ped[data_col_ped].dt.date == hoje.date()]
-        df_ped_semana = df_ped[df_ped[data_col_ped].dt.isocalendar().week == hoje.isocalendar().week]
 
         colx, coly = st.columns(2)
         colx.markdown(f'<div class="card info"><span class="card-title">Faturado Hoje</span><b>R$ {df_fat_dia["Total Produto"].sum():,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
         coly.markdown(f'<div class="card info"><span class="card-title">Faturado na Semana</span><b>R$ {df_fat_semana["Total Produto"].sum():,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
+
+    with col_ped:
+        st.markdown("### Últimos Pedidos (Prometidos)")
+        ult_ped = df_ped_mes.sort_values(by=data_col_ped, ascending=False)
+        ult_ped[data_col_ped] = ult_ped[data_col_ped].dt.strftime('%d/%m/%Y')
+        ult_ped_view = ult_ped[[data_col_ped, 'Cliente', 'Vendedor', 'Valor Receita Bruta Pedido']].head(10)
+        ult_ped_view['Valor Receita Bruta Pedido'] = ult_ped_view['Valor Receita Bruta Pedido'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        st.dataframe(ult_ped_view, height=300)
+
+        df_ped_dia = df_ped[df_ped[data_col_ped].dt.date == hoje.date()]
+        df_ped_semana = df_ped[df_ped[data_col_ped].dt.isocalendar().week == hoje.isocalendar().week]
 
         colx, coly = st.columns(2)
         colx.markdown(f'<div class="card info"><span class="card-title">Prometido Hoje</span><b>R$ {df_ped_dia["Valor Receita Bruta Pedido"].sum():,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
