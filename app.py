@@ -81,8 +81,7 @@ else:
     restante = max(META_MENSAL - realizado - prometido, 0)
 
     perc_realizado = min(realizado / META_MENSAL * 100, 100)
-    perc_prometido = min(prometido / META_MENSAL * 100, 100)
-    perc_restante = max(100 - perc_realizado - perc_prometido, 0)
+    perc_restante = max(100 - perc_realizado, 0)
 
     st.markdown(f"""
         <style>
@@ -111,7 +110,6 @@ else:
 
     fig_termo = go.Figure()
     fig_termo.add_trace(go.Bar(y=['Meta'], x=[realizado], orientation='h', marker=dict(color=COLOR_REALIZADO), text=[f'{perc_realizado:.1f}%'], textposition='auto'))
-    fig_termo.add_trace(go.Bar(y=['Meta'], x=[prometido], orientation='h', marker=dict(color=COLOR_PROMETIDO), text=[f'{perc_prometido:.1f}%'], textposition='auto'))
     fig_termo.add_trace(go.Bar(y=['Meta'], x=[restante], orientation='h', marker=dict(color=COLOR_RESTANTE), text=[f'{perc_restante:.1f}%'], textposition='auto'))
     fig_termo.update_layout(barmode='stack', height=80, margin=dict(t=10, b=10), showlegend=False)
     st.plotly_chart(fig_termo, use_container_width=True)
