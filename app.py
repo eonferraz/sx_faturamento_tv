@@ -89,9 +89,9 @@ else:
     mes_atual = hoje.month
     ano_atual = hoje.year
 
-    data_col_fat = [col for col in df_fat.columns if 'Data' in col][0]
+    data_col_fat = 'Data Emissão'
     data_col_cart = 'Data Entrega'
-    data_col_ped = 'Data Inclusão'
+    data_col_ped = 'Data Emissao'
 
     df_fat[data_col_fat] = pd.to_datetime(df_fat[data_col_fat], errors='coerce')
     df_cart[data_col_cart] = pd.to_datetime(df_cart[data_col_cart], errors='coerce')
@@ -164,18 +164,15 @@ else:
 
     with col_ped:
         st.markdown("### Últimos Pedidos Inclusos")
-        if 'Data Inclusão' in df_ped.columns:
-            ult_ped = df_ped_mes.sort_values(by='Data Inclusão', ascending=False)
-            ult_ped['Data Inclusão'] = ult_ped['Data Inclusão'].dt.strftime('%d/%m/%Y')
-            ult_ped_view = ult_ped[['Data Inclusão', 'Cliente', 'Vendedor', 'Valor Receita Bruta Pedido']].head(10)
-            ult_ped_view['Valor Receita Bruta Pedido'] = ult_ped_view['Valor Receita Bruta Pedido'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-            st.dataframe(ult_ped_view, height=table_height)
+        ult_ped = df_ped_mes.sort_values(by='Data Emissao', ascending=False)
+        ult_ped['Data Emissao'] = ult_ped['Data Emissao'].dt.strftime('%d/%m/%Y')
+        ult_ped_view = ult_ped[['Data Emissao', 'Cliente', 'Vendedor', 'Valor Receita Bruta Pedido']].head(10)
+        ult_ped_view['Valor Receita Bruta Pedido'] = ult_ped_view['Valor Receita Bruta Pedido'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        st.dataframe(ult_ped_view, height=table_height)
 
-            df_ped_dia = df_ped[df_ped['Data Inclusão'].dt.date == hoje.date()]
-            df_ped_semana = df_ped[df_ped['Data Inclusão'].dt.isocalendar().week == hoje.isocalendar().week]
+        df_ped_dia = df_ped[df_ped['Data Emissao'].dt.date == hoje.date()]
+        df_ped_semana = df_ped[df_ped['Data Emissao'].dt.isocalendar().week == hoje.isocalendar().week]
 
-            colx, coly = st.columns(2)
-            colx.markdown(f'<div class="card info"><span class="card-title">Pedidos Hoje</span><b>R$ {df_ped_dia["Valor Receita Bruta Pedido"].sum():,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
-            coly.markdown(f'<div class="card info"><span class="card-title">Pedidos na Semana</span><b>R$ {df_ped_semana["Valor Receita Bruta Pedido"].sum():,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
-        else:
-            st.warning("A coluna 'Data Inclusão' não foi encontrada nos dados de pedidos inclusos.")
+        colx, coly = st.columns(2)
+        colx.markdown(f'<div class="card info"><span class="card-title">Pedidos Hoje</span><b>R$ {df_ped_dia["Valor Receita Bruta Pedido"].sum():,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
+        coly.markdown(f'<div class="card info"><span class="card-title">Pedidos na Semana</span><b>R$ {df_ped_semana["Valor Receita Bruta Pedido"].sum():,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
