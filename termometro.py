@@ -20,8 +20,8 @@ def render_termometro(df_fat, df_cart, META_MENSAL, hoje):
     perc_restante = max(100 - perc_realizado - perc_carteira, 0)
 
     fig_termo = go.Figure()
-    fig_termo.add_trace(go.Bar(x=[realizado], orientation='h', marker=dict(color='#2ca02c'), text=[f'{perc_realizado:.1f}%'], textposition='auto', textfont=dict(size=18)))
-    fig_termo.add_trace(go.Bar(x=[carteira], orientation='h', marker=dict(color='#ff7f0e'), text=[f'{perc_carteira:.1f}%'], textposition='auto', textfont=dict(size=18)))
+    fig_termo.add_trace(go.Bar(x=[realizado], orientation='h', marker=dict(color='#A0C63F'), text=[f'{perc_realizado:.1f}%'], textposition='auto', textfont=dict(size=18)))
+    fig_termo.add_trace(go.Bar(x=[carteira], orientation='h', marker=dict(color='#FFC000'), text=[f'{perc_carteira:.1f}%'], textposition='auto', textfont=dict(size=18)))
     fig_termo.add_trace(go.Bar(x=[restante], orientation='h', marker=dict(color='#d62728'), text=[f'{perc_restante:.1f}%'], textposition='auto', textfont=dict(size=18)))
 
     fig_termo.update_layout(barmode='stack', height=80, margin=dict(t=10, b=10), showlegend=False, yaxis=dict(showticklabels=False))
