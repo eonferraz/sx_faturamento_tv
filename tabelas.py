@@ -14,19 +14,15 @@ def render_tabelas(df_fat, df_ped, hoje):
     col_fat, col_ped = st.columns(2)
 
     with col_fat:
-        st.markdown("### Últimos Faturamentos")
-        ult_fat = df_fat.sort_values(by='Data Emissão', ascending=False)
-        ult_fat['Data Emissão'] = ult_fat['Data Emissão'].dt.strftime('%d/%m/%Y')
-        ult_fat_renamed = ult_fat.rename(columns={'DocNum': 'Nota Fiscal'})
-        ult_fat_view = ult_fat_renamed[['Nota Fiscal', 'Cliente', 'Vendedor', 'Total Produto']].head(10)
-        ult_fat_view['Total Produto'] = ult_fat_view['Total Produto'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        st.markdown("### Últimas Datas de Faturamento")
+        ult_fat = df_fat.sort_values(by='Data Faturamento', ascending=False)
+        ult_fat['Data Faturamento'] = ult_fat['Data Faturamento'].dt.strftime('%d/%m/%Y')
+        ult_fat_view = ult_fat[['Data Faturamento']].head(10)
         st.dataframe(ult_fat_view, height=table_height)
 
     with col_ped:
-        st.markdown("### Últimos Pedidos Inclusos")
+        st.markdown("### Últimas Datas de Inclusão de Pedidos")
         ult_ped = df_ped.sort_values(by='Data Emissao', ascending=False)
         ult_ped['Data Emissao'] = ult_ped['Data Emissao'].dt.strftime('%d/%m/%Y')
-        ult_ped_renamed = ult_ped.rename(columns={'Pedido': 'PV'})
-        ult_ped_view = ult_ped_renamed[['PV', 'Cliente', 'Vendedor', 'Valor Receita Bruta Pedido']].head(10)
-        ult_ped_view['Valor Receita Bruta Pedido'] = ult_ped_view['Valor Receita Bruta Pedido'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        ult_ped_view = ult_ped[['Data Emissao']].head(10)
         st.dataframe(ult_ped_view, height=table_height)
