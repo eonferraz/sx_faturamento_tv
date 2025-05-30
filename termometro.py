@@ -21,7 +21,7 @@ def render_termometro(df_fat, df_cart, META_MENSAL, hoje):
 
     fig_termo = go.Figure()
     fig_termo.add_trace(go.Bar(x=[realizado], orientation='h', marker=dict(color='#A0C63F'), text=[f'{perc_realizado:.1f}%'], textposition='auto', textfont=dict(size=32)))
-    fig_termo.add_trace(go.Bar(x=[carteira], orientation='h', marker=dict(color='#FFC000'), text=[f'{perc_carteira:.1f}%'], textposition='auto', textfont=dict(size=32)))
+    fig_termo.add_trace(go.Bar(x=[carteira], orientation='h', marker=dict(color='#FFD85B'), text=[f'{perc_carteira:.1f}%'], textposition='auto', textfont=dict(size=32)))
     fig_termo.add_trace(go.Bar(x=[restante], orientation='h', marker=dict(color='#d62728'), text=[f'{perc_restante:.1f}%'], textposition='auto', textfont=dict(size=32)))
 
     fig_termo.update_layout(barmode='stack', height=80, margin=dict(t=10, b=10), showlegend=False, yaxis=dict(showticklabels=False))
