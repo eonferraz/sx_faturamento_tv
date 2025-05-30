@@ -21,10 +21,10 @@ def render_cards(df_fat, df_cart, df_ped, META_MENSAL, hoje):
         .card { border-radius: 10px; padding: 12px; margin-bottom: 10px; color: white; text-align: center; }
         .card b { font-size: 32px; }
         .card-title { font-size: 16px; display: block; }
-        .meta { background-color: #1f77b4; }
-        .realizado { background-color: #2ca02c; }
+        .meta { background-color: #0160A2; }
+        .realizado { background-color: #A0C63F; }
         .carteira { background-color: #ff7f0e; }
-        .restante { background-color: #d62728; }
+        .restante { background-color: #FFC000; }
         </style>
     """, unsafe_allow_html=True)
 
