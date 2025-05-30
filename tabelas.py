@@ -15,19 +15,16 @@ def render_tabelas(df_fat, df_ped, hoje):
 
     with col_fat:
         st.markdown("### Últimos Faturamentos")
-        col_fat_names = list(df_fat.columns)
-        st.write(f"Colunas detectadas no DataFrame de faturamento: {col_fat_names}")
 
-        # Baseado na query enviada, o campo certo é 'Nº Doc SAP'
         doc_field = 'Nº Doc SAP'
         date_field = 'Data Emissão'
 
         if doc_field in df_fat.columns and date_field in df_fat.columns:
             df_fat[date_field] = pd.to_datetime(df_fat[date_field], errors='coerce')
-            ult_fat = df_fat.sort_values(by=[date_field, doc_field], ascending=[False, False])
+            ult_fat = df_fat.groupby([doc_field, date_field, 'Cliente', 'Vendedor'], as_index=False)['Total Produto'].sum()
+            ult_fat = ult_fat.sort_values(by=[date_field, doc_field], ascending=[False, False])
             ult_fat[date_field] = ult_fat[date_field].dt.strftime('%d/%m/%Y')
-            ult_fat_view = ult_fat[[doc_field, date_field, 'Cliente', 'Vendedor', 'Total Produto']]
-            ult_fat_view = ult_fat_view.rename(columns={doc_field: 'NF'})
+            ult_fat_view = ult_fat.rename(columns={doc_field: 'NF'})[['NF', date_field, 'Cliente', 'Vendedor', 'Total Produto']]
             ult_fat_view['Total Produto'] = ult_fat_view['Total Produto'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
             st.dataframe(ult_fat_view, height=table_height, use_container_width=True, hide_index=True)
         else:
@@ -35,12 +32,10 @@ def render_tabelas(df_fat, df_ped, hoje):
 
     with col_ped:
         st.markdown("### Últimos Pedidos Inclusos")
-        col_ped_names = list(df_ped.columns)
-        st.write(f"Colunas detectadas no DataFrame de pedidos: {col_ped_names}")
 
         if 'Pedido' in df_ped.columns and 'Data Emissao' in df_ped.columns:
             df_ped['Data Emissao'] = pd.to_datetime(df_ped['Data Emissao'], errors='coerce')
-            ult_ped_grouped = df_ped.groupby(['Pedido', 'Data Emissao', 'Cliente', 'Vendedor'], as_index=False)['Valor Receita Bruta Pedido'].first()
+            ult_ped_grouped = df_ped.groupby(['Pedido', 'Data Emissao', 'Cliente', 'Vendedor'], as_index=False)['Valor Receita Bruta Pedido'].sum()
             ult_ped_grouped = ult_ped_grouped.sort_values(by=['Data Emissao', 'Pedido'], ascending=[False, False])
             ult_ped_grouped['Data Emissao'] = ult_ped_grouped['Data Emissao'].dt.strftime('%d/%m/%Y')
             ult_ped_view = ult_ped_grouped.rename(columns={'Pedido': 'PV'})[['PV', 'Data Emissao', 'Cliente', 'Vendedor', 'Valor Receita Bruta Pedido']]
