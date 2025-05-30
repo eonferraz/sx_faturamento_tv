@@ -5,7 +5,12 @@ COLOR_REALIZADO = '#2ca02c'
 COLOR_CARTEIRA = '#ff7f0e'
 COLOR_RESTANTE = '#d62728'
 
-def render_termometro(realizado, carteira, restante, meta_mensal):
+def render_termometro(df_fat, df_cart, meta_mensal):
+    # Certificar que os valores são somas numéricas, não DataFrames
+    realizado = df_fat['Total Produto'].sum() if 'Total Produto' in df_fat.columns else 0
+    carteira = df_cart['Valor Receita Bruta Pedido'].sum() if 'Valor Receita Bruta Pedido' in df_cart.columns else 0
+    restante = max(meta_mensal - realizado - carteira, 0)
+
     perc_realizado = min((realizado / meta_mensal) * 100, 100)
     perc_carteira = min((carteira / meta_mensal) * 100, 100)
     perc_restante = max(100 - perc_realizado - perc_carteira, 0)
