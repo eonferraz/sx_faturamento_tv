@@ -6,8 +6,8 @@ def render_tabelas(df_fat, df_ped, hoje):
     # Aplicar estilo global maior
     st.markdown("""
         <style>
-        .css-1d391kg .e1f1d6gn2 {font-size: 36px;} /* Título das tabelas */
-        .css-1v0mbdj .e1f1d6gn1 {font-size: 30px;} /* Conteúdo das tabelas */
+        .css-1d391kg .e1f1d6gn2 {font-size: 50px;} /* Título das tabelas */
+        .css-1v0mbdj .e1f1d6gn1 {font-size: 50px;} /* Conteúdo das tabelas */
         </style>
     """, unsafe_allow_html=True)
 
