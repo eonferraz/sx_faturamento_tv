@@ -14,13 +14,13 @@ def render_tabelas(df_fat, df_ped, hoje):
 
     with col_fat:
         st.markdown("### Últimos Faturamentos")
-        ult_fat = df_fat.sort_values(by='Data Emissão', ascending=False)
+        ult_fat = df_fat.sort_values(by=['Data Emissão', 'Nota Fiscal'], ascending=[False, False])
         ult_fat['Data Emissão'] = ult_fat['Data Emissão'].dt.strftime('%d/%m/%Y')
         if 'Nota Fiscal' in ult_fat.columns:
-            ult_fat_view = ult_fat[['Nota Fiscal', 'Data Emissão', 'Cliente', 'Vendedor', 'Total Produto']].head(10)
+            ult_fat_view = ult_fat[['Nota Fiscal', 'Data Emissão', 'Cliente', 'Vendedor', 'Total Produto']]
             ult_fat_view = ult_fat_view.rename(columns={'Nota Fiscal': 'NF'})
         else:
-            ult_fat_view = ult_fat[['Data Emissão', 'Cliente', 'Vendedor', 'Total Produto']].head(10)
+            ult_fat_view = ult_fat[['Data Emissão', 'Cliente', 'Vendedor', 'Total Produto']]
         ult_fat_view['Total Produto'] = ult_fat_view['Total Produto'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
         st.dataframe(ult_fat_view, height=table_height, use_container_width=True, hide_index=True)
 
@@ -29,10 +29,10 @@ def render_tabelas(df_fat, df_ped, hoje):
         ult_ped = df_ped.copy()
         if 'Pedido' in ult_ped.columns:
             ult_ped_grouped = ult_ped.groupby(['Pedido', 'Data Emissao', 'Cliente', 'Vendedor'], as_index=False)['Valor Receita Bruta Pedido'].sum()
-            ult_ped_grouped = ult_ped_grouped.sort_values(by='Data Emissao', ascending=False)
+            ult_ped_grouped = ult_ped_grouped.sort_values(by=['Data Emissao', 'Pedido'], ascending=[False, False])
             ult_ped_grouped['Data Emissao'] = ult_ped_grouped['Data Emissao'].dt.strftime('%d/%m/%Y')
-            ult_ped_view = ult_ped_grouped.rename(columns={'Pedido': 'PV'})[['PV', 'Data Emissao', 'Cliente', 'Vendedor', 'Valor Receita Bruta Pedido']].head(10)
+            ult_ped_view = ult_ped_grouped.rename(columns={'Pedido': 'PV'})[['PV', 'Data Emissao', 'Cliente', 'Vendedor', 'Valor Receita Bruta Pedido']]
         else:
-            ult_ped_view = ult_ped[['Data Emissao', 'Cliente', 'Vendedor', 'Valor Receita Bruta Pedido']].head(10)
+            ult_ped_view = ult_ped[['Data Emissao', 'Cliente', 'Vendedor', 'Valor Receita Bruta Pedido']]
         ult_ped_view['Valor Receita Bruta Pedido'] = ult_ped_view['Valor Receita Bruta Pedido'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
         st.dataframe(ult_ped_view, height=table_height, use_container_width=True, hide_index=True)
