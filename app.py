@@ -159,8 +159,8 @@ else:
         df_fat_semana = df_fat[df_fat[data_col_fat].dt.isocalendar().week == hoje.isocalendar().week]
 
         colx, coly = st.columns(2)
-        colx.markdown(f'<div class="card info"><span class="card-title">Faturado Hoje</span><b>R$ {df_fat_dia["Total Produto"].sum():,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
-        coly.markdown(f'<div class="card info"><span class="card-title">Faturado na Semana</span><b>R$ {df_fat_semana["Total Produto"].sum():,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
+        #colx.markdown(f'<div class="card info"><span class="card-title">Faturado Hoje</span><b>R$ {df_fat_dia["Total Produto"].sum():,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
+        #coly.markdown(f'<div class="card info"><span class="card-title">Faturado na Semana</span><b>R$ {df_fat_semana["Total Produto"].sum():,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
 
     with col_ped:
         st.markdown("### Últimos Pedidos Inclusos")
@@ -174,5 +174,5 @@ else:
         df_ped_semana = df_ped[df_ped['Data Emissao'].dt.isocalendar().week == hoje.isocalendar().week]
 
         colx, coly = st.columns(2)
-        colx.markdown(f'<div class="card info"><span class="card-title">Pedidos Hoje</span><b>R$ {df_ped_dia["Valor Receita Bruta Pedido"].sum():,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
-        coly.markdown(f'<div class="card info"><span class="card-title">Pedidos na Semana</span><b>R$ {df_ped_semana["Valor Receita Bruta Pedido"].sum():,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
+        #colx.markdown(f'<div class="card info"><span class="card-title">Pedidos Hoje</span><b>R$ {df_ped_dia["Valor Receita Bruta Pedido"].sum():,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
+        #coly.markdown(f'<div class="card info"><span class="card-title">Pedidos na Semana</span><b>R$ {df_ped_semana["Valor Receita Bruta Pedido"].sum():,.2f}</b></div>'.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
