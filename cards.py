@@ -18,9 +18,9 @@ def render_cards(df_fat, df_cart, df_ped, META_MENSAL, hoje):
 
     st.markdown("""
         <style>
-        .card { border-radius: 10px; padding: 12px; margin-bottom: 10px; color: black; text-align: center; }
-        .card b { font-size: 42px; }
-        .card-title { font-size: 16px; display: block; }
+        .card { border-radius: 2px; padding: 12px; margin-bottom: 10px; color: white; text-align: center; }
+        .card b { font-size: 44px; }
+        .card-title { font-size: 20px; display: block; }
         .meta { background-color: #0160A2; }
         .realizado { background-color: #A0C63F; }
         .carteira { background-color: #FFC000; }
