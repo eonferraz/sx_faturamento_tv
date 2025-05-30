@@ -16,30 +16,45 @@ def render_tabelas(df_fat, df_ped, hoje):
     with col_fat:
         st.markdown("### Últimos Faturamentos")
 
-        doc_field = 'Nº Doc SAP'
-        date_field = 'Data Emissão'
+        # Padroniza nomes de colunas
+        df_fat = df_fat.rename(columns={
+            'Doc SAP': 'DocNum',
+            'Nº Doc SAP': 'DocNum',
+            'Data Emissão': 'DataEmissao',
+            'Cliente': 'Cliente',
+            'Vendedor': 'Vendedor',
+            'Total Produto': 'TotalProduto'
+        })
 
-        if doc_field in df_fat.columns and date_field in df_fat.columns:
-            df_fat[date_field] = pd.to_datetime(df_fat[date_field], errors='coerce')
-            ult_fat = df_fat.groupby([doc_field, date_field, 'Cliente', 'Vendedor'], as_index=False)['Total Produto'].sum()
-            ult_fat = ult_fat.sort_values(by=[date_field, doc_field], ascending=[False, False])
-            ult_fat[date_field] = ult_fat[date_field].dt.strftime('%d/%m/%Y')
-            ult_fat_view = ult_fat.rename(columns={doc_field: 'NF'})[['NF', date_field, 'Cliente', 'Vendedor', 'Total Produto']]
+        if 'DocNum' in df_fat.columns and 'DataEmissao' in df_fat.columns:
+            df_fat['DataEmissao'] = pd.to_datetime(df_fat['DataEmissao'], errors='coerce')
+            ult_fat = df_fat.groupby(['DocNum', 'DataEmissao', 'Cliente', 'Vendedor'], as_index=False)['TotalProduto'].sum()
+            ult_fat = ult_fat.sort_values(by=['DataEmissao', 'DocNum'], ascending=[False, False])
+            ult_fat['DataEmissao'] = ult_fat['DataEmissao'].dt.strftime('%d/%m/%Y')
+            ult_fat_view = ult_fat.rename(columns={'DocNum': 'NF', 'DataEmissao': 'Data Emissão', 'TotalProduto': 'Total Produto'})[['NF', 'Data Emissão', 'Cliente', 'Vendedor', 'Total Produto']]
             ult_fat_view['Total Produto'] = ult_fat_view['Total Produto'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
             st.dataframe(ult_fat_view, height=table_height, use_container_width=True, hide_index=True)
         else:
-            st.warning(f"Colunas '{doc_field}' ou '{date_field}' não encontradas no DataFrame de faturamento.")
+            st.warning(f"Colunas 'DocNum' ou 'DataEmissao' não encontradas no DataFrame de faturamento.")
 
     with col_ped:
         st.markdown("### Últimos Pedidos Inclusos")
 
-        if 'Pedido' in df_ped.columns and 'Data Emissao' in df_ped.columns:
-            df_ped['Data Emissao'] = pd.to_datetime(df_ped['Data Emissao'], errors='coerce')
-            ult_ped_grouped = df_ped.groupby(['Pedido', 'Data Emissao', 'Cliente', 'Vendedor'], as_index=False)['Valor Receita Bruta Pedido'].sum()
-            ult_ped_grouped = ult_ped_grouped.sort_values(by=['Data Emissao', 'Pedido'], ascending=[False, False])
-            ult_ped_grouped['Data Emissao'] = ult_ped_grouped['Data Emissao'].dt.strftime('%d/%m/%Y')
-            ult_ped_view = ult_ped_grouped.rename(columns={'Pedido': 'PV'})[['PV', 'Data Emissao', 'Cliente', 'Vendedor', 'Valor Receita Bruta Pedido']]
+        df_ped = df_ped.rename(columns={
+            'Pedido': 'Pedido',
+            'Data Emissao': 'DataEmissao',
+            'Cliente': 'Cliente',
+            'Vendedor': 'Vendedor',
+            'Valor Receita Bruta Pedido': 'ValorReceitaBrutaPedido'
+        })
+
+        if 'Pedido' in df_ped.columns and 'DataEmissao' in df_ped.columns:
+            df_ped['DataEmissao'] = pd.to_datetime(df_ped['DataEmissao'], errors='coerce')
+            ult_ped_grouped = df_ped.groupby(['Pedido', 'DataEmissao', 'Cliente', 'Vendedor'], as_index=False)['ValorReceitaBrutaPedido'].sum()
+            ult_ped_grouped = ult_ped_grouped.sort_values(by=['DataEmissao', 'Pedido'], ascending=[False, False])
+            ult_ped_grouped['DataEmissao'] = ult_ped_grouped['DataEmissao'].dt.strftime('%d/%m/%Y')
+            ult_ped_view = ult_ped_grouped.rename(columns={'Pedido': 'PV', 'DataEmissao': 'Data Emissão', 'ValorReceitaBrutaPedido': 'Valor Receita Bruta Pedido'})[['PV', 'Data Emissão', 'Cliente', 'Vendedor', 'Valor Receita Bruta Pedido']]
             ult_ped_view['Valor Receita Bruta Pedido'] = ult_ped_view['Valor Receita Bruta Pedido'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
             st.dataframe(ult_ped_view, height=table_height, use_container_width=True, hide_index=True)
         else:
-            st.warning("Colunas 'Pedido' ou 'Data Emissao' não encontradas no DataFrame de pedidos.")
+            st.warning("Colunas 'Pedido' ou 'DataEmissao' não encontradas no DataFrame de pedidos.")
