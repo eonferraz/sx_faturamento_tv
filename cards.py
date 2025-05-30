@@ -23,7 +23,7 @@ def render_cards(df_fat, df_cart, df_ped, META_MENSAL, hoje):
         .card-title { font-size: 20px; display: block; }
         .meta { background-color: #0160A2; color: white; }
         .realizado { background-color: #A0C63F; color: black; }
-        .carteira { background-color: #ff7f0e; color: black; }
+        .carteira { background-color: #FFC000; color: black; }
         .restante { background-color: #d62728; color: white; }
         </style>
     """, unsafe_allow_html=True)
