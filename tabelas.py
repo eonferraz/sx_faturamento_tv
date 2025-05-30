@@ -1,13 +1,13 @@
 import streamlit as st
 
 def render_tabelas(df_fat, df_ped, hoje):
-    table_height = 450
+    table_height = 600
 
     # Aplicar estilo global maior
     st.markdown("""
         <style>
-        .css-1d391kg .e1f1d6gn2 {font-size: 18px;} /* Título das tabelas */
-        .css-1v0mbdj .e1f1d6gn1 {font-size: 16px;} /* Conteúdo das tabelas */
+        .css-1d391kg .e1f1d6gn2 {font-size: 36px;} /* Título das tabelas */
+        .css-1v0mbdj .e1f1d6gn1 {font-size: 30px;} /* Conteúdo das tabelas */
         </style>
     """, unsafe_allow_html=True)
 
