@@ -24,7 +24,7 @@ def render_cards(df_fat, df_cart, df_ped, META_MENSAL, hoje):
         .meta { background-color: #0160A2; }
         .realizado { background-color: #A0C63F; }
         .carteira { background-color: #FFC000; }
-        .restante { background-color: #FFC000; }
+        .restante { background-color: #d62728; }
         </style>
     """, unsafe_allow_html=True)
 
