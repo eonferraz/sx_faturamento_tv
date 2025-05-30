@@ -18,13 +18,13 @@ def render_cards(df_fat, df_cart, df_ped, META_MENSAL, hoje):
 
     st.markdown("""
         <style>
-        .card { border-radius: 2px; padding: 12px; margin-bottom: 10px; color: white; text-align: center; }
+        .card { border-radius: 10px; padding: 12px; margin-bottom: 10px; text-align: center; }
         .card b { font-size: 44px; }
         .card-title { font-size: 20px; display: block; }
-        .meta { background-color: #0160A2; }
-        .realizado { background-color: #A0C63F; }
-        .carteira { background-color: #FFC000; }
-        .restante { background-color: #d62728; }
+        .meta { background-color: #0160A2; color: white; }
+        .realizado { background-color: #A0C63F; color: black; }
+        .carteira { background-color: #ff7f0e; color: black; }
+        .restante { background-color: #d62728; color: white; }
         </style>
     """, unsafe_allow_html=True)
 
