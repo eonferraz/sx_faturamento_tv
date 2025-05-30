@@ -14,11 +14,11 @@ def render_tabelas(df_fat, df_ped, hoje):
 
     with col_fat:
         st.markdown("### Últimos Faturamentos")
-        ult_fat = df_fat.sort_values(by=['Data Emissão', 'Nota Fiscal'], ascending=[False, False])
+        ult_fat = df_fat.sort_values(by=['Data Emissão', 'DocNum'], ascending=[False, False])
         ult_fat['Data Emissão'] = ult_fat['Data Emissão'].dt.strftime('%d/%m/%Y')
-        if 'Nota Fiscal' in ult_fat.columns:
-            ult_fat_view = ult_fat[['Nota Fiscal', 'Data Emissão', 'Cliente', 'Vendedor', 'Total Produto']]
-            ult_fat_view = ult_fat_view.rename(columns={'Nota Fiscal': 'NF'})
+        if 'DocNum' in ult_fat.columns:
+            ult_fat_view = ult_fat[['DocNum', 'Data Emissão', 'Cliente', 'Vendedor', 'Total Produto']]
+            ult_fat_view = ult_fat_view.rename(columns={'DocNum': 'NF'})
         else:
             ult_fat_view = ult_fat[['Data Emissão', 'Cliente', 'Vendedor', 'Total Produto']]
         ult_fat_view['Total Produto'] = ult_fat_view['Total Produto'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
@@ -28,7 +28,9 @@ def render_tabelas(df_fat, df_ped, hoje):
         st.markdown("### Últimos Pedidos Inclusos")
         ult_ped = df_ped.copy()
         if 'Pedido' in ult_ped.columns:
-            ult_ped_grouped = ult_ped.groupby(['Pedido', 'Data Emissao', 'Cliente', 'Vendedor'], as_index=False)['Valor Receita Bruta Pedido'].sum()
+            # Para evitar duplicação, manter apenas linhas distintas por Pedido
+            ult_ped_unique = ult_ped.drop_duplicates(subset=['Pedido'])
+            ult_ped_grouped = ult_ped_unique.groupby(['Pedido', 'Data Emissao', 'Cliente', 'Vendedor'], as_index=False)['Valor Receita Bruta Pedido'].sum()
             ult_ped_grouped = ult_ped_grouped.sort_values(by=['Data Emissao', 'Pedido'], ascending=[False, False])
             ult_ped_grouped['Data Emissao'] = ult_ped_grouped['Data Emissao'].dt.strftime('%d/%m/%Y')
             ult_ped_view = ult_ped_grouped.rename(columns={'Pedido': 'PV'})[['PV', 'Data Emissao', 'Cliente', 'Vendedor', 'Valor Receita Bruta Pedido']]
