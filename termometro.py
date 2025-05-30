@@ -15,6 +15,12 @@ def render_termometro(df_fat, df_cart, META_MENSAL, hoje):
     perc_carteira = min(carteira / META_MENSAL * 100, 100)
     perc_restante = max(100 - perc_realizado - perc_carteira, 0)
 
+    # Exibir os valores calculados no Streamlit
+    st.write(f"✅ **Realizado:** R$ {realizado:,.2f}")
+    st.write(f"📦 **Carteira:** R$ {carteira:,.2f}")
+    st.write(f"⏳ **Restante:** R$ {restante:,.2f}")
+    st.write(f"🎯 **Meta Mensal:** R$ {META_MENSAL:,.2f}")
+
     fig_termo = go.Figure()
     fig_termo.add_trace(go.Bar(y=['Meta'], x=[realizado], orientation='h', marker=dict(color='#2ca02c'), text=[f'{perc_realizado:.1f}%'], textposition='auto', textfont=dict(size=18)))
     fig_termo.add_trace(go.Bar(y=['Meta'], x=[carteira], orientation='h', marker=dict(color='#ff7f0e'), text=[f'{perc_carteira:.1f}%'], textposition='auto', textfont=dict(size=18)))
