@@ -5,8 +5,11 @@ COLOR_REALIZADO = '#2ca02c'
 COLOR_CARTEIRA = '#ff7f0e'
 COLOR_RESTANTE = '#d62728'
 
+def render_termometro(realizado, carteira, restante, meta_mensal):
+    perc_realizado = min((realizado / meta_mensal) * 100, 100)
+    perc_carteira = min((carteira / meta_mensal) * 100, 100)
+    perc_restante = max(100 - perc_realizado - perc_carteira, 0)
 
-def render_termometro(realizado, carteira, restante, perc_realizado, perc_carteira, perc_restante):
     fig_termo = go.Figure()
     fig_termo.add_trace(go.Bar(
         y=['Meta'],
