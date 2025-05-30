@@ -18,10 +18,11 @@ def render_tabelas(df_fat, df_ped, hoje):
         col_fat_names = list(df_fat.columns)
         st.write(f"Colunas detectadas no DataFrame de faturamento: {col_fat_names}")
 
-        doc_field = 'DocNum' if 'DocNum' in df_fat.columns else ('Nº Doc SAP' if 'Nº Doc SAP' in df_fat.columns else None)
+        # Baseado na query enviada, o campo certo é 'Nº Doc SAP'
+        doc_field = 'Nº Doc SAP'
         date_field = 'Data Emissão'
 
-        if doc_field and date_field in df_fat.columns:
+        if doc_field in df_fat.columns and date_field in df_fat.columns:
             df_fat[date_field] = pd.to_datetime(df_fat[date_field], errors='coerce')
             ult_fat = df_fat.sort_values(by=[date_field, doc_field], ascending=[False, False])
             ult_fat[date_field] = ult_fat[date_field].dt.strftime('%d/%m/%Y')
@@ -30,7 +31,7 @@ def render_tabelas(df_fat, df_ped, hoje):
             ult_fat_view['Total Produto'] = ult_fat_view['Total Produto'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
             st.dataframe(ult_fat_view, height=table_height, use_container_width=True, hide_index=True)
         else:
-            st.warning("Colunas de número de documento ou data não encontradas no DataFrame de faturamento.")
+            st.warning(f"Colunas '{doc_field}' ou '{date_field}' não encontradas no DataFrame de faturamento.")
 
     with col_ped:
         st.markdown("### Últimos Pedidos Inclusos")
