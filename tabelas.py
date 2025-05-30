@@ -3,9 +3,9 @@ import streamlit as st
 def render_tabelas(df_fat, df_ped, hoje):
     table_height = 450
 
-    # Campos considerados nas consultas SQL:
-    # → Faturamento: coluna do número da nota fiscal (NF) = 'DocNum', data = 'Data Emissão'
-    # → Pedidos: coluna do número do pedido (PV) = 'Pedido', data = 'Data Emissao'
+    # Detectar os nomes reais das colunas vindas das queries
+    # Para faturamento → número NF: provavelmente 'Nota Fiscal'
+    # Para pedidos → número PV: provavelmente 'Pedido'
 
     st.markdown("""
         <style>
@@ -20,8 +20,11 @@ def render_tabelas(df_fat, df_ped, hoje):
         st.markdown("### Últimos Faturamentos")
         ult_fat = df_fat.sort_values(by='Data Emissão', ascending=False)
         ult_fat['Data Emissão'] = ult_fat['Data Emissão'].dt.strftime('%d/%m/%Y')
-        ult_fat_view = ult_fat[['DocNum', 'Data Emissão', 'Cliente', 'Vendedor', 'Total Produto']].head(10)
-        ult_fat_view = ult_fat_view.rename(columns={'DocNum': 'NF'})
+        if 'Nota Fiscal' in ult_fat.columns:
+            ult_fat_view = ult_fat[['Nota Fiscal', 'Data Emissão', 'Cliente', 'Vendedor', 'Total Produto']].head(10)
+            ult_fat_view = ult_fat_view.rename(columns={'Nota Fiscal': 'NF'})
+        else:
+            ult_fat_view = ult_fat[['Data Emissão', 'Cliente', 'Vendedor', 'Total Produto']].head(10)
         ult_fat_view['Total Produto'] = ult_fat_view['Total Produto'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
         st.dataframe(ult_fat_view, height=table_height, use_container_width=True, hide_index=True)
 
@@ -29,7 +32,10 @@ def render_tabelas(df_fat, df_ped, hoje):
         st.markdown("### Últimos Pedidos Inclusos")
         ult_ped = df_ped.sort_values(by='Data Emissao', ascending=False)
         ult_ped['Data Emissao'] = ult_ped['Data Emissao'].dt.strftime('%d/%m/%Y')
-        ult_ped_view = ult_ped[['Pedido', 'Data Emissao', 'Cliente', 'Vendedor', 'Valor Receita Bruta Pedido']].head(10)
-        ult_ped_view = ult_ped_view.rename(columns={'Pedido': 'PV'})
+        if 'Pedido' in ult_ped.columns:
+            ult_ped_view = ult_ped[['Pedido', 'Data Emissao', 'Cliente', 'Vendedor', 'Valor Receita Bruta Pedido']].head(10)
+            ult_ped_view = ult_ped_view.rename(columns={'Pedido': 'PV'})
+        else:
+            ult_ped_view = ult_ped[['Data Emissao', 'Cliente', 'Vendedor', 'Valor Receita Bruta Pedido']].head(10)
         ult_ped_view['Valor Receita Bruta Pedido'] = ult_ped_view['Valor Receita Bruta Pedido'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
         st.dataframe(ult_ped_view, height=table_height, use_container_width=True, hide_index=True)
