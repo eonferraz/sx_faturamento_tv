@@ -9,7 +9,7 @@ from tabelas import render_tabelas
 
 st.set_page_config(page_title="Dashboard de Faturamento e Carteira", layout="wide")
 
-META_MENSAL = 5_800_000
+META_MENSAL = 5_310_000
 
 def get_faturamento_data():
     try:
